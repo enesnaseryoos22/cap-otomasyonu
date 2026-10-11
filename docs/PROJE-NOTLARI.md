@@ -158,6 +158,8 @@ Bölüm sayfasında bir de Makine → BM protokolü var, ama dosyasına erişile
 - **ÇAP öğrenci no:** benzersiz anahtar anadal öğrenci numarasıdır; ÇAP numarası ek alandır.
 - **Harf notu katsayıları ve tekrar kuralı** Sınav Yönetmeliği'ne bağlıdır. Ayardan girilir, koordinatöre teyit ettirilir.
 - **Özel notlar:** e-posta "öğrenci görmez" diyor. Bölüm başkanı için açık değil; varsayılan olarak notları yalnız koordinatör görür.
+- **YDP izinli öğrenci (YDP Md. 7/2):** Ana dalda izinli (mazeretli) sayılan öğrenci yan dalda da izinli sayılır. Taslakta ÇAP için Ç4 var, YDP için karşılığı yok. Uygulamada Ç4 mantığı YDP'ye de uygulanır: izinli dönemler Y4 (iki dönem ders almama) hesabına girmez.
+- **BM yan dal ders listesi (YDP Md. 5/1-g):** Bölüm en az 60 AKTS'lik yan dal ders listesi ilan eder; öğrenci bu listeden en az 30 AKTS ve 6 ders seçer. Bu liste elimizdeki belgelerde yok. Demo için YDP öğrencisi genel BM kataloğundan seçer; liste koordinatörden istenecek.
 
 ## 8. Rehberdeki eski madde numaraları
 Rehber (Şubat 2025) eski yönergeye atıf yapar. Güncel karşılıkları:
