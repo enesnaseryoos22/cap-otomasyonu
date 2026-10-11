@@ -1,0 +1,78 @@
+Arkadaşlar, Yapılan görüşmeler sonucunda sistemin farklı yorumlanmasının önüne geçmek ve bir standart oluşturmak amacıyla istenilen otomayon sistemin en genel halini aşağıda yazılı hale getirdim. Bölümümüze gelen çift anadal (ÇAP) ve yandal (YDP) öğrencilerini şu anda form ve kâğıt üzerinden elle takip ediyoruz. Amacımız bu takibi tek bir web uygulamasında dijital olarak yapmak. Aşağıda sistemin çerçevesini yazıyorum. Otomasyonunuzu bu çerçeveye uygun hazırlayın. Teknoloji, ekran tasarımı, veri yapısı ve uygulama ayrıntıları tamamen size aittir. Herkes kendi çözümünü tasarlayacak.
+
+Elinizdeki çift anadal ve yandal yönergelerini ve formları dikkatle okuyun. Sürecin, kuralların ve belgelerin ayrıntısı oradadır. Burada tekrar etmiyorum. Yönergeyle bu e-posta çelişirse yönerge esas alınır, bana da haber verin.
+
+SİSTEM NE İÇİN?
+
+Bölümümüze gelen her ÇAP ve YDP öğrencisi için şunu yapabilmek istiyoruz: öğrencinin alacağı dersleri sisteme işlemek, hangi dersi hangi akademik yıl ve dönemde aldığını ve ne zaman geçtiğini görmek, belgelerini tek yerde tutmak, öğrenciyle yazışmak, yönergedeki kurallara uyup uymadığını izlemek ve mezuniyete veya sertifikaya ne kadar yaklaştığını görmek.
+
+Sistem yalnızca bizim bölümümüz içindir. Başvuru değerlendirme ve öğrenci seçimi sistemde yapılmaz. Dekanlık bunu yapıp bize bildirir, ben de kabul edilen öğrenciyi sisteme eklerim. Öğrencinin ana dalındaki dersleri ve süreçleri sistem takip etmez. Bir öğrenci ÇAP veya YDP öğrencisi olarak kayıtlıdır. İkisi aynı sistemde yönetilir, farklarını yönergeden çıkaracaksınız.
+
+Sistemin OBİS ile bağlantısı olmayacak. Bu nedenle öğrenci bilgileri, dersler, notlar ve belgeler sisteme manuel olarak girilecek şekilde tasarlanacak. Ancak ileride OBİS bağlantısı eklenme ihtimali var. Tasarımınızı buna uygun yapın: veri girişi tek bir yerden geçsin, öğrenci numarası gibi benzersiz bir anahtarla çalışın ve dışarıdan veri alınabilecek şekilde esnek olsun. OBİS entegrasyonunu şimdi yapmanız gerekmiyor.
+
+KULLANICILAR
+Sistemde üç tür giriş olacak, başka rol gerekmez:
+
+Koordinatör: sistemin genel yöneticisi (mevcut durumda ben).
+Öğrenci: kendi hesabıyla girer, yalnızca kendi bilgilerini görür ve yönetir.
+Bölüm başkanı: yalnızca izler. Kayıtları ve işlem geçmişini görebilir ama hiçbir şeyi değiştiremez.
+Hesapları koordinatör açar. Öğrenciler kendi kendine kayıt olmaz. Giriş yöntemini (şifre, e-posta bağlantısı vb.) siz seçersiniz, ama güvenli olmasına dikkat edin.
+
+KOORDİNATÖR NE YAPAR?
+Öğrenciyi sisteme ekler (öğrenci no, ad-soyad, okul e-postası, ÇAP mı YDP mı, kabul dönemi).
+Öğrencinin yüklediği belgeleri ve girdiği kayıtları inceler, onaylar veya gerekçesiyle reddeder.
+Öğrenciden ek belge veya bilgi ister.
+Öğrenci kartına kendine ait not ekler. Bu notları öğrenci görmez.
+Yönergedeki kuralları ve sistem ayarlarını girer ve günceller.
+Gerektiğinde bir kaydı düzeltir veya şartlara uymadığı için gerekçesiyle iptal eder.
+Mezuniyet, sertifika veya kayıt silme kararını verir. Sistem uyarır, karar koordinatördedir.
+ÖĞRENCİ NE YAPAR?
+İmzalı formlarını (öğrenci kendi anadalında hazırlatır) taratıp sisteme yükler.
+Alacağı dersleri sisteme girer. Dersleri ders kataloğundan seçer veya ders koduyla arar. Serbest metinle ders uydurulamaz. Katalogda olmayan bir ders için koordinatöre talep gönderir.
+Her dönem aldığı dersleri girer.
+Dönem sonunda önceki dönemin notlarını girer ve transkriptini yükler.
+Koordinatörle mesajlaşır, istenen belgeleri yükler.
+Kendi durumunu görür: aldığı ve geçtiği dersler, kalan dersler, onay bekleyen işlemler.
+ONAY MANTIĞI
+Öğrencinin girdiği ders, not ve belgeler "onay bekliyor" durumunda başlar. Koordinatör onaylayana kadar kesinleşmez ve kural hesaplarına girmez. Onaylanan kayıt kilitlenir: öğrenci artık değiştiremez. Hata varsa yalnızca koordinatör düzeltir ve düzeltme kayıt altına alınır. Reddedilen veya iptal edilen kayıt silinmez, o durumuyla kalır.
+
+DERS TAKİBİ (sistemin merkezi)
+Her öğrenci için alacağı dersler listelenir.
+Her ders için şunlar görülebilir: hangi akademik yıl ve dönemde alındığı (ör. 2025-2026 Güz), hangi dönemde geçildiği, notu ve durumu (ör. planlandı, alındı, geçti, kaldı, muaf, çıkarıldı).
+Bir ders birden fazla kez alınmış olabilir. Her deneme ayrı görülebilmeli.
+Öğrencinin tamamladığı ve kalan dersleri (kredi/AKTS bilgisiyle birlikte) tek bakışta görülebilmeli.
+Bölümün ders listesi zamanla değişebilir. Bu yüzden koordinatör bir öğrencinin ders listesinden ders çıkarabilmeli veya yeni ders ekleyebilmeli. Her değişiklik gerekçesi ve tarihiyle kaydedilmeli. Daha önce geçilmiş dersler ve notlar bundan etkilenmemeli.
+Koordinatör ders kataloğunu da düzenleyebilmeli (ders ekleme, bilgi güncelleme, pasife alma).
+BELGE YÖNETİMİ
+Her öğrencinin kartında bir doküman arşivi olur. İmzalı formlar, transkript, yönetim kurulu yazısı gibi resmi yazılar burada tür ve durumlarıyla (bekliyor, onaylandı, reddedildi) saklanır.
+Öğrenci kendi belgelerini yükler. Koordinatör her türlü belgeyi yükleyebilir.
+Her dönem sonunda öğrenci, bölümümüzde aldığı derslerin transkriptini (ÇAP/YDP not belgesi) mutlaka yüklemeli. Bu belge yüklenmeden dönem sonu notları onaya gönderilemez. Kendi ana dalının transkriptini yüklemesi ise isteğe bağlıdır.
+Koordinatör öğrenciden ek belge isteyebilir. İstek ve yanıtı izlenebilir olmalı (bekliyor, yüklendi, onaylandı, reddedildi).
+Yüklenen belgeler kontrol edilmeli: izin verilen dosya türleri, boyut sınırı, bozuk veya zararlı dosyaya karşı koruma. Öğrenci yalnızca kendi kartına yükleyebilmeli ve yalnızca kendi belgelerini görebilmeli.
+Reddedilen veya yenilenen belgenin eski sürümü silinmez, arşivde kalır. Öğrenci belgeyi silemez.
+MESAJLAŞMA
+Koordinatör ile öğrenci arasında sistem içi mesajlaşma olmalı. Yazışmalar kalıcı kayıttır, silinemez. Mesaja belge eklenebilmeli ve yeni mesajdan karşı taraf haberdar olmalı. Öğrenci yalnızca kendi yazışmalarını görür. 
+
+İŞLEM KAYDI (DENETİM)
+Sistemde yapılan her işlem kayıt altına alınır: kim, ne zaman, neyi, eski ve yeni değeriyle ne yaptı. Bu kayıt değiştirilemez ve silinemez. Bölüm başkanı bu kaydı görebilir. Hiçbir veri tamamen silinmemeli. silinen, Yanlış veya geçersiz kayıt "iptal" olarak işaretlenir.
+
+YÖNERGE KURALLARI
+Yönergelerdeki sayısal kurallar (not ortalaması eşikleri, başvuru dönemleri, ders ve kredi sayıları, süreler) yazılımın içine sabit olarak gömülmemeli. Koordinatör bunları ayarlardan girip güncelleyebilmeli.
+Yönerge değiştiğinde yeni değerler girilir ama eski değerler ve eski sürüm kaybolmamalı. Geçmişte yapılmış kontroller yeni değerle yeniden yazılmamalı.
+Sistem, öğrencinin durumunu bu kurallara göre kontrol edip koordinatörü ve ilgili öğrenciyi uyarabilmeli. Yalnızca onaylı kayıtlar hesaba girer. Uyarı karar değildir, kararı koordinatör verir.
+Not ortalaması eşiklerinde dayanak olan ana dal genel ortalamasını (GANO) yalnızca koordinatör girer. Bu değerin kaynağı (ör. transkript, öğrenci işleri) kayda yazılır.
+MEVCUT ÖĞRENCİLER
+Sistem açıldığında bölümde zaten ÇAP ve YDP öğrencileri olacak. Koordinatör onların önceki dönemlerde aldığı dersleri ve notları da geriye dönük olarak (ilgili dönem ve not bilgisiyle) sisteme girebilmeli. Bu girişler ilk kurulumda onay kilidine takılmamalı.
+
+VERİ GÜVENLİĞİ
+Şu anda sisteme yalnızca sentetik veri kullanarak veri girişi yapabilirsiniz. Sistemde uygun sızma testlerinin yapılmış ve gerekli güvenlik önlemlerinin alınmış olması gereklidir. Bu testleri yalnızca kendi geliştirdiğiniz uygulama üzerinde ve kendi test ortamınızda yapın.  Yaptığınız testleri ve aldığınız önlemleri tasarım açıklamanızda kısaca belirtin. 
+
+TAHMİNİ AKIŞ (yol gösterici, birebir uygulamak zorunda değilsiniz kendi çözümünüz göre özelleştirebilirsiniz)
+
+Koordinatör öğrenciyi ekler → öğrenci formlarını yükler → koordinatör onaylar → öğrenci alacağı dersleri girer, koordinatör onaylar → dönem başlar, öğrenci o dönem alacağı dersleri girer → dönem sonunda öğrenci notlarını girer ve transkriptini yükler → koordinatör karşılaştırıp onaylar → sistem kurallara göre uyarı verir → koordinatör gerekirse düzeltir veya iptal eder → öğrenci tüm dersleri tamamlar → koordinatör mezuniyet veya sertifika kararını verir.
+
+TESLİM
+
+İlk ara demo halini ara sınavdan önce, 30 Ekim Cuma günü, kodlarıyla birlikte bilgisayarda sunum yaparak teslim etmeniz gerekmektedir. Hazırlıklarınız buna göre yapınız.
+
+Sorunlarınız için e-postayla veya hafta içi Pazartesi ve Perşembe günleri benimle iletişime geçebilirsiniz..
