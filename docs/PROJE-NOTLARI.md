@@ -22,7 +22,7 @@ Bir özellik bitince kutusu işaretlenir. Demo kapsamındakiler **[30 Ekim]** il
 - [ ] OBİS bağlantısı yok, ama tüm yazmalar tek servis katmanından geçer. Öğrenci no benzersiz anahtardır; CSV ile içe aktarılabilir
 
 **Kullanıcılar ve giriş**
-- [ ] Yalnız 3 rol vardır: Koordinatör, Öğrenci, Bölüm başkanı (salt okunur) **[30 Ekim]**
+- [x] Yalnız 3 rol vardır: Koordinatör, Öğrenci, Bölüm başkanı (salt okunur) **[30 Ekim]**
 - [ ] Hesapları koordinatör açar; öğrenci kendi kendine kayıt olamaz. Giriş güvenlidir **[30 Ekim]**
 
 **Koordinatör**
@@ -94,6 +94,11 @@ Her ayar değişikliği yeni bir sürüm satırı olarak eklenir (geçerlilik ba
 - **Belge sürümü:** yeni yükleme yeni satır açar (`onceki_surum_id`). Eskisi silinmez.
 - **Dosya güvenliği:** uzantı değil dosya imzası (magic number) kontrol edilir. Dosya rastgele adla, web kökü dışında saklanır. İndirme yetki kontrolünden geçer.
 - **Yetki:** her uçta rol ve sahiplik kontrolü yapılır. Bölüm başkanının yazma uçlarına erişimi yoktur. Kimlikler UUID'dir.
+- **Kod ve veritabanı adları Türkçedir** (ör. `Ogrenci.ogrenciNo`, `PlanDersi.onayDurumu`). Tablo adları snake_case (`plan_dersi`).
+- **İşlem kaydı koruması:** `islem_kaydi` tablosunda UPDATE, DELETE ve TRUNCATE bir PostgreSQL tetikleyicisiyle engellenir (migration `islem_kaydi_koruma`).
+- **Oturum:** 2 saatlik JWT, httpOnly + SameSite=Strict çerezde. 5 hatalı denemede hesap 15 dk kilitlenir; IP başına 15 dk'da 20 giriş denemesi. CSRF: double-submit jeton (`csrf` çerezi + `X-CSRF-Token` başlığı).
+- **Bilinen bağımlılık uyarısı:** `npm audit`, Prisma 6'nın yapılandırma paketindeki `deepmerge-ts` için yüksek seviye uyarı verir. Yalnız bizim yazdığımız yapılandırmayı işler, dışarıdan girdi almaz. Prisma 7'ye geçişte giderilecek; güvenlik raporuna eklenecek.
+- **Windows kurulum notu:** Sistem dili Türkçe olunca PostgreSQL kurulum programının `initdb` adımı başarısız olur. Çözüm: `initdb --locale=C --encoding=UTF8` ile elle başlatıp `pg_ctl register` ile servis olarak kaydetmek.
 
 ## 5. Örnek veri: EEM → BM protokolü (135 AKTS)
 | Ders Kodu | AKTS | Ders Adı | Özel şart |
@@ -159,6 +164,7 @@ Bölüm sayfasında bir de Makine → BM protokolü var, ama dosyasına erişile
 - **Harf notu katsayıları ve tekrar kuralı** Sınav Yönetmeliği'ne bağlıdır. Ayardan girilir, koordinatöre teyit ettirilir.
 - **Özel notlar:** e-posta "öğrenci görmez" diyor. Bölüm başkanı için açık değil; varsayılan olarak notları yalnız koordinatör görür.
 - **YDP izinli öğrenci (YDP Md. 7/2):** Ana dalda izinli (mazeretli) sayılan öğrenci yan dalda da izinli sayılır. Taslakta ÇAP için Ç4 var, YDP için karşılığı yok. Uygulamada Ç4 mantığı YDP'ye de uygulanır: izinli dönemler Y4 (iki dönem ders almama) hesabına girmez.
+- **Seçmeli ders türleri:** Bologna sayfası seçmelileri ayırmaz. Örnek veride 4. yarıyıl seçmelileri ve 7. yarıyılın 2 AKTS'lik seçmelileri `SOSYAL_SECMELI`, diğerleri `TEKNIK_SECMELI` sayıldı (protokoldeki "Teknik Seçmeli" yuvalarını bunlar doldurur). Koordinatöre teyit ettirilecek. Bologna sayfasında ulusal kredi yok; alan boş bırakıldı.
 - **BM yan dal ders listesi (YDP Md. 5/1-g):** Bölüm en az 60 AKTS'lik yan dal ders listesi ilan eder; öğrenci bu listeden en az 30 AKTS ve 6 ders seçer. Bu liste elimizdeki belgelerde yok. Demo için YDP öğrencisi genel BM kataloğundan seçer; liste koordinatörden istenecek.
 
 ## 8. Rehberdeki eski madde numaraları
