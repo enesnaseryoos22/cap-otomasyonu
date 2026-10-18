@@ -28,7 +28,7 @@ Selçuk Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği Bölümü i
 ```
 npm run dev
 ```
-Arayüz: http://localhost:5173 · API: http://localhost:3000
+API: http://localhost:3000 (arayüz henüz yok)
 
 ## Deneme hesapları (sentetik veri)
 Tüm hesapların şifresi: `Demo.2026!`
@@ -54,4 +54,3 @@ Testler ayrı bir veritabanında (`cap_otomasyonu_test`) çalışır.
 - `server/src/routes/`: API uçları
 - `server/src/services/`: iş mantığı; tüm veri yazma işlemleri buradan geçer
 - `server/src/middleware/`: oturum, rol ve CSRF kontrolü
-- `client/src/pages/`: rol bazlı sayfalar
