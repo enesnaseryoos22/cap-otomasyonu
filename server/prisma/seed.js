@@ -1,5 +1,5 @@
 // Örnek (sentetik) veri. Gerçek öğrenci verisi kullanılmaz.
-// Çalıştırma: npm run db:reset  (veritabanını sıfırlar ve bu dosyayı çalıştırır)
+// Çalıştırma: npm run db:seed  (veri zaten varsa atlanır)
 import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import argon2 from 'argon2';
@@ -20,6 +20,42 @@ async function main() {
     return;
   }
 
+  // --- Kullanıcılar (3 rol) ---
+  const sifreHash = await argon2.hash(process.env.DEMO_SIFRE || 'Demo.2026!');
+  const kullanici = (eposta, rol) => prisma.kullanici.create({ data: { eposta, rol, sifreHash } });
+
+  const koordinator = await kullanici('koordinator@ornek.edu.tr', 'KOORDINATOR');
+  await kullanici('baskan@ornek.edu.tr', 'BOLUM_BASKANI');
+
+  // --- Kural ayarları (docs/PROJE-NOTLARI.md §3). Değerler yönergeden; koordinatör sonradan yeni sürüm ekler. ---
+  const capYonergesi = new Date('2026-06-02T00:00:00+03:00');
+  const ydpYonergesi = new Date('2023-10-26T00:00:00+03:00');
+  const ayarlar = [
+    ['cap.anadal_gano_esik', 2.72, 'ÇAP: anadal GANO alt eşiği', 'ÇAP Yön. Md. 9/1-e, 8/1-c', capYonergesi],
+    ['cap.anadal_gano_alt_sinir', 2.5, 'ÇAP: bir defaya mahsus düşülebilecek alt sınır', 'ÇAP Yön. Md. 9/1-e', capYonergesi],
+    ['cap.ders_almama_donem', 2, 'ÇAP: üst üste ders almama sınırı (dönem)', 'ÇAP Yön. Md. 9/1-d', capYonergesi],
+    ['cap.azami_sure_yil_4yillik', 7, 'ÇAP: 4 yıllık programda azami süre (yıl)', 'ÇAP Yön. Md. 8/1-d; 2547/44-c', capYonergesi],
+    ['cap.azami_sure_uyari_donem', 2, 'ÇAP: azami süre dolmadan önce uyarı (son dönem sayısı)', 'Tasarım kararı', capYonergesi],
+    ['ydp.min_akts', 30, 'YDP: ders planında en az AKTS', 'YDP Yön. Md. 5/1-g', ydpYonergesi],
+    ['ydp.min_ders', 6, 'YDP: ders planında en az ders sayısı', 'YDP Yön. Md. 5/1-g', ydpYonergesi],
+    ['ydp.anadal_gano_esik', 2.3, 'YDP: anadal GANO alt eşiği', 'YDP Yön. Md. 7/5', ydpYonergesi],
+    ['ydp.gano_esik', 2.0, 'YDP: yandal ortalaması alt eşiği', 'YDP Yön. Md. 7/6, 7/8', ydpYonergesi],
+    ['ydp.gano_esik_donem', 2, 'YDP: eşik altında üst üste dönem sınırı', 'YDP Yön. Md. 7/6', ydpYonergesi],
+    ['ydp.ders_almama_donem', 2, 'YDP: üst üste ders almama sınırı (dönem)', 'YDP Yön. Md. 7/4', ydpYonergesi],
+    ['ydp.ek_sure_yariyil', 2, 'YDP: anadal mezuniyetinden sonra ek süre (yarıyıl)', 'YDP Yön. Md. 7/9', ydpYonergesi],
+    ['not.harf_katsayilari', { AA: 4.0, BA: 3.5, BB: 3.0, CB: 2.5, CC: 2.0, DC: 1.5, DD: 1.0, FD: 0.5, FF: 0.0 },
+      'Harf notu katsayıları (koordinatöre teyit ettirilecek)', 'Sınav Yönetmeliği', capYonergesi],
+    ['not.tekrar_gecerli_deneme', 'SON', 'Tekrarlanan derste ortalamaya giren deneme (teyit edilecek)', 'Sınav Yönetmeliği', capYonergesi],
+    ['not.ortalama_agirlik', 'AKTS', 'Ortalama hesabında ağırlık', 'Tasarım kararı', capYonergesi],
+    ['dosya.izinli_turler', ['application/pdf', 'image/jpeg', 'image/png'], 'Yüklenebilecek dosya türleri', 'Tasarım kararı', capYonergesi],
+    ['dosya.max_mb', 10, 'En büyük dosya boyutu (MB)', 'Tasarım kararı', capYonergesi],
+  ];
+  for (const [anahtar, deger, aciklama, dayanak, gecerlilikBaslangic] of ayarlar) {
+    await prisma.kuralAyari.create({
+      data: { anahtar, deger, aciklama, dayanak, gecerlilikBaslangic, girenId: koordinator.id },
+    });
+  }
+
   // --- Bölümler ---
   const eem = await prisma.bolum.create({ data: { kod: 'EEM', ad: 'Elektrik-Elektronik Mühendisliği' } });
   const mak = await prisma.bolum.create({ data: { kod: 'MAK', ad: 'Makine Mühendisliği' } });
@@ -31,6 +67,10 @@ async function main() {
       donem[`${yil} ${tur}`] = await prisma.donem.create({ data: { akademikYil: yil, tur } });
     }
   }
+  await prisma.donem.update({
+    where: { id: donem['2026-2027 GUZ'].id },
+    data: { baslangic: new Date('2026-09-14'), bitis: new Date('2027-01-17') },
+  });
 
   // --- Ders kataloğu (Bologna sayfasından) ---
   const ders = {};
@@ -53,6 +93,7 @@ async function main() {
         sira: Number(s.sira),
         dersId: s.dersKodu ? ders[s.dersKodu].id : null,
         yuvaAdi: s.yuvaAdi || null,
+        yuvaDersTuru: s.yuvaAdi ? 'TEKNIK_SECMELI' : null,
         yariyil: Number(s.yariyil),
         akts: Number(s.akts),
         ozelSartNo: s.ozelSartNo ? Number(s.ozelSartNo) : null,
@@ -71,13 +112,6 @@ async function main() {
     });
   }
 
-  // --- Kullanıcılar (3 rol) ---
-  const sifreHash = await argon2.hash(process.env.DEMO_SIFRE || 'Demo.2026!');
-  const kullanici = (eposta, rol) => prisma.kullanici.create({ data: { eposta, rol, sifreHash } });
-
-  const koordinator = await kullanici('koordinator@ornek.edu.tr', 'KOORDINATOR');
-  await kullanici('baskan@ornek.edu.tr', 'BOLUM_BASKANI');
-
   // --- Öğrenciler ---
   // 1) Yeni ÇAP öğrencisi: henüz ders seçmedi
   await prisma.ogrenci.create({
@@ -93,18 +127,18 @@ async function main() {
     data: {
       ogrenciNo: '214301002', adSoyad: 'Mehmet Demir', eposta: 'ogrenci2@ornek.edu.tr',
       programTuru: 'CAP', anadalBolumId: eem.id, kabulDonemId: donem['2025-2026 GUZ'].id,
-      capOgrenciNo: 'C25001',
+      capOgrenciNo: 'C25001', kaynak: 'GECMIS_AKTARIM',
       kullaniciId: (await kullanici('ogrenci2@ornek.edu.tr', 'OGRENCI')).id,
     },
   });
+  const simdi = new Date();
+  const aktarim = { onayDurumu: 'ONAYLANDI', kaynak: 'GECMIS_AKTARIM', olusturanId: koordinator.id, onaylayanId: koordinator.id, onayTarihi: simdi };
+
   // Protokoldeki belirli derslerin hepsi plana eklenir (seçmeli yuvaları henüz boş)
   const plan = {};
   for (const s of Object.values(protokolSatiri).filter((s) => s.dersId)) {
     plan[s.dersId] = await prisma.planDersi.create({
-      data: {
-        ogrenciId: mehmet.id, dersId: s.dersId, protokolSatiriId: s.id,
-        onayDurumu: 'ONAYLANDI', kaynak: 'GECMIS_AKTARIM', onayTarihi: new Date(),
-      },
+      data: { ogrenciId: mehmet.id, dersId: s.dersId, protokolSatiriId: s.id, ...aktarim },
     });
   }
   // Denemeler: [ders kodu, alınan dönem, harf notu, sonuç]
@@ -121,7 +155,7 @@ async function main() {
       data: {
         planDersiId: plan[ders[kod].id].id, alinanDonemId: donem[donemAdi].id, harfNotu, sonuc,
         gecilenDonemId: sonuc === 'GECTI' ? donem[donemAdi].id : null,
-        onayDurumu: 'ONAYLANDI', kaynak: 'GECMIS_AKTARIM', onayTarihi: new Date(),
+        ...aktarim,
       },
     });
   }
@@ -130,6 +164,14 @@ async function main() {
     await prisma.planDersi.update({ where: { id: plan[ders[kod].id].id }, data: { durum: 'GECTI' } });
   }
   await prisma.planDersi.update({ where: { id: plan[ders['3301352'].id].id }, data: { durum: 'ALINDI' } });
+
+  // Anadal GANO'su (koordinatör, kaynağıyla)
+  await prisma.anadalGanoKaydi.create({
+    data: {
+      ogrenciId: mehmet.id, donemId: donem['2025-2026 BAHAR'].id, deger: 2.95,
+      kaynak: 'TRANSKRIPT', girenId: koordinator.id,
+    },
+  });
 
   // 3) YDP öğrencisi (Makine)
   await prisma.ogrenci.create({

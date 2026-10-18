@@ -94,11 +94,21 @@ Her ayar değişikliği yeni bir sürüm satırı olarak eklenir (geçerlilik ba
 - **Belge sürümü:** yeni yükleme yeni satır açar (`onceki_surum_id`). Eskisi silinmez.
 - **Dosya güvenliği:** uzantı değil dosya imzası (magic number) kontrol edilir. Dosya rastgele adla, web kökü dışında saklanır. İndirme yetki kontrolünden geçer.
 - **Yetki:** her uçta rol ve sahiplik kontrolü yapılır. Bölüm başkanının yazma uçlarına erişimi yoktur. Kimlikler UUID'dir.
-- **Kod ve veritabanı adları Türkçedir** (ör. `Ogrenci.ogrenciNo`, `PlanDersi.onayDurumu`). Tablo adları snake_case (`plan_dersi`).
-- **İşlem kaydı koruması:** `islem_kaydi` tablosunda UPDATE, DELETE ve TRUNCATE bir PostgreSQL tetikleyicisiyle engellenir (migration `islem_kaydi_koruma`).
+- **Kod ve veritabanı adları Türkçedir.** Kodda camelCase (`Ogrenci.ogrenciNo`), veritabanında snake_case (`ogrenci.ogrenci_no`).
+- **Veritabanı dili:** `cap_otomasyonu` ICU `tr-TR` ile oluşturulur (`LOCALE_PROVIDER icu ICU_LOCALE 'tr-TR'`). Türkçe sıralama (C < Ç < I < İ) ve büyük/küçük harf (i → İ, I → ı) doğru çalışır.
+- **Veritabanı kuralları** (`migrations/*_veritabani_kurallari`): uygulama hatalı olsa bile veritabanı reddeder.
+  - Tüm tablolarda DELETE ve TRUNCATE yasak. Yeni tabloya da bu tetikleyiciler eklenmelidir.
+  - `islem_kaydi`, `kural_ayari`, `uyari_ayari` yalnız eklenir.
+  - Onay geçişleri: ONAY_BEKLIYOR → ONAYLANDI/REDDEDILDI/IPTAL, ONAYLANDI → IPTAL. Reddedilen ve iptal edilen kayıt değişmez. Ret ve iptal gerekçe ister.
+  - Öğrenci yalnız kendi kartına, onay bekliyor durumunda kayıt ekler. Geçmiş aktarımı yalnız koordinatör yapar ve kayıt onaylı başlar.
+  - Rol kontrolü: GANO, karar, not, ayar, onay ve izin kayıtlarını yalnız koordinatör yazar. Bölüm başkanı hiçbir kaydın sahibi olamaz.
+  - S2: öğrencinin notu transkript belgesine bağlanmadan kaydedilemez.
+  - Belgenin dosyası, mesajın metni ve uyarının içeriği değişmez.
+  - Kısmi tekil indeksler: aynı ders etkin planda bir kez; dönem başına tek GANO ve tek izin; tür başına tek geçerli karar.
+  - Testler: `server/tests/veritabani.test.js` (her deneme geri alınan bir transaction içinde).
 - **Oturum:** 2 saatlik JWT, httpOnly + SameSite=Strict çerezde. 5 hatalı denemede hesap 15 dk kilitlenir; IP başına 15 dk'da 20 giriş denemesi. CSRF: double-submit jeton (`csrf` çerezi + `X-CSRF-Token` başlığı).
 - **Bilinen bağımlılık uyarısı:** `npm audit`, Prisma 6'nın yapılandırma paketindeki `deepmerge-ts` için yüksek seviye uyarı verir. Yalnız bizim yazdığımız yapılandırmayı işler, dışarıdan girdi almaz. Prisma 7'ye geçişte giderilecek; güvenlik raporuna eklenecek.
-- **Windows kurulum notu:** Sistem dili Türkçe olunca PostgreSQL kurulum programının `initdb` adımı başarısız olur. Çözüm: `initdb --locale=C --encoding=UTF8` ile elle başlatıp `pg_ctl register` ile servis olarak kaydetmek.
+- **Windows kurulum notu:** Sistem dili Türkçe olunca PostgreSQL kurulum programının `initdb` adımı başarısız olur. Çözüm: sunucuyu `initdb --locale=C --encoding=UTF8` ile elle başlatıp `pg_ctl register` ile servis olarak kaydetmek; Türkçe dil desteği veritabanı düzeyinde ICU `tr-TR` ile verilir.
 
 ## 5. Örnek veri: EEM → BM protokolü (135 AKTS)
 | Ders Kodu | AKTS | Ders Adı | Özel şart |

@@ -8,8 +8,16 @@ Selçuk Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği Bölümü i
 
 ## İlk kurulum
 1. Bağımlılıkları kurun: `npm run kurulum`
-2. `server/.env.example` dosyasını `server/.env` olarak kopyalayın ve veritabanı bağlantısını yazın.
-3. Tabloları oluşturun ve örnek veriyi yükleyin:
+2. Veritabanını Türkçe dil desteğiyle oluşturun (postgres kullanıcısıyla):
+   ```sql
+   CREATE ROLE cap_app LOGIN CREATEDB PASSWORD '...';
+   CREATE DATABASE cap_otomasyonu OWNER cap_app ENCODING 'UTF8'
+     LOCALE_PROVIDER icu ICU_LOCALE 'tr-TR' LOCALE 'C' TEMPLATE template0;
+   CREATE DATABASE cap_otomasyonu_test OWNER cap_app ENCODING 'UTF8'
+     LOCALE_PROVIDER icu ICU_LOCALE 'tr-TR' LOCALE 'C' TEMPLATE template0;
+   ```
+3. `server/.env.example` dosyasını `server/.env` olarak kopyalayın ve veritabanı bağlantısını yazın.
+4. Tabloları oluşturun ve örnek veriyi yükleyin:
    ```
    cd server
    npx prisma migrate deploy

@@ -1,5 +1,14 @@
 // Çift Anadal ve Yandal Takip Otomasyonu — veritabanı şeması
-// Kural: hiçbir kayıt fiziksel olarak silinmez; yanlış kayıt "IPTAL" olarak işaretlenir.
+//
+// Kurallar (koordinatör e-postası ve docs/TASLAK.md):
+// - Hiçbir kayıt fiziksel olarak silinmez; yanlış kayıt "IPTAL" olarak işaretlenir.
+//   Silme ve boşaltma (TRUNCATE) veritabanı tetikleyicisiyle engellenir.
+// - Öğrencinin girdiği kayıt ONAY_BEKLIYOR başlar; onaylanınca kilitlenir.
+// - İşlem kaydı ve kural ayarları yalnız eklenir, güncellenmez.
+// Prisma'nın ifade edemediği kısıtlar (CHECK, tetikleyiciler, kısmi tekil indeksler)
+// migrations/*_veritabani_kurallari/migration.sql dosyasındadır.
+//
+// Adlandırma: kodda camelCase, veritabanında snake_case (@map / @@map).
 
 generator client {
   provider = "prisma-client-js"
@@ -10,17 +19,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---------- Sabit değer listeleri ----------
+// =====================================================================
+// Sabit değer listeleri
+// =====================================================================
 
 enum Rol {
   KOORDINATOR
   OGRENCI
   BOLUM_BASKANI
+
+  @@map("rol")
 }
 
 enum ProgramTuru {
   CAP
   YDP
+
+  @@map("program_turu")
 }
 
 enum OgrenciDurumu {
@@ -30,18 +45,24 @@ enum OgrenciDurumu {
   SERTIFIKA_ALDI
   AYRILDI
   KAYDI_SILINDI
+
+  @@map("ogrenci_durumu")
 }
 
 enum DonemTuru {
   GUZ
   BAHAR
   YAZ
+
+  @@map("donem_turu")
 }
 
 enum DersTuru {
   ZORUNLU
   TEKNIK_SECMELI
   SOSYAL_SECMELI
+
+  @@map("ders_turu")
 }
 
 enum DersDurumu {
@@ -51,6 +72,8 @@ enum DersDurumu {
   KALDI
   MUAF
   CIKARILDI
+
+  @@map("ders_durumu")
 }
 
 enum OnayDurumu {
@@ -58,41 +81,165 @@ enum OnayDurumu {
   ONAYLANDI
   REDDEDILDI
   IPTAL
+
+  @@map("onay_durumu")
 }
 
-// Kaydın nereden geldiği. İleride CSV ve OBIS eklenecek.
+// Kaydın nereden geldiği (OBİS'e hazırlık: tüm kaynaklar aynı tablolara yazar)
 enum VeriKaynagi {
   OGRENCI
   KOORDINATOR
   GECMIS_AKTARIM
+  CSV_AKTARIM
+
+  @@map("veri_kaynagi")
 }
 
-// ---------- Kullanıcılar ----------
+enum GanoKaynagi {
+  TRANSKRIPT
+  OGRENCI_ISLERI
+  DIGER
+
+  @@map("gano_kaynagi")
+}
+
+enum BelgeTuru {
+  KABUL_VE_DERS_PROTOKOLU
+  DERS_KAYIT_FORMU
+  CAP_YDP_TRANSKRIPTI
+  ANADAL_TRANSKRIPTI
+  MUAFIYET_FORMU
+  YONETIM_KURULU_YAZISI
+  RESMI_YAZI
+  EK_BELGE
+  MESAJ_EKI
+
+  @@map("belge_turu")
+}
+
+enum BelgeTalebiDurumu {
+  BEKLIYOR
+  YUKLENDI
+  ONAYLANDI
+  REDDEDILDI
+  IPTAL
+
+  @@map("belge_talebi_durumu")
+}
+
+enum DersTalebiDurumu {
+  BEKLIYOR
+  KABUL_EDILDI
+  REDDEDILDI
+  IPTAL
+
+  @@map("ders_talebi_durumu")
+}
+
+enum IzinTuru {
+  KAYIT_DONDURMA
+  MAZERET
+
+  @@map("izin_turu")
+}
+
+enum UyariDurumu {
+  ACIK
+  KAPATILDI
+
+  @@map("uyari_durumu")
+}
+
+enum KararTuru {
+  MEZUNIYET
+  SERTIFIKA
+  KAYIT_SILME
+
+  @@map("karar_turu")
+}
+
+enum BildirimTuru {
+  YENI_MESAJ
+  ONAY_SONUCU
+  BELGE_TALEBI
+  UYARI
+  KARAR
+
+  @@map("bildirim_turu")
+}
+
+enum SifreBaglantisiTuru {
+  HESAP_ACMA
+  SIFRE_SIFIRLAMA
+
+  @@map("sifre_baglantisi_turu")
+}
+
+// =====================================================================
+// Kullanıcılar ve giriş
+// =====================================================================
 
 model Kullanici {
   id                String    @id @default(uuid()) @db.Uuid
   eposta            String    @unique
-  sifreHash         String?   // şifre belirlenmemişse boş
+  sifreHash         String?   @map("sifre_hash") // şifre belirlenene kadar boş
   rol               Rol
   aktif             Boolean   @default(true)
-  hataliGirisSayisi Int       @default(0)
-  kilitliBitis      DateTime? // art arda hatalı girişte geçici kilit
-  sonGiris          DateTime?
-  olusturma         DateTime  @default(now())
-  guncelleme        DateTime  @updatedAt
+  hataliGirisSayisi Int       @default(0) @map("hatali_giris_sayisi")
+  kilitliBitis      DateTime? @map("kilitli_bitis") @db.Timestamptz(6)
+  sonGiris          DateTime? @map("son_giris") @db.Timestamptz(6)
+  olusturma         DateTime  @default(now()) @db.Timestamptz(6)
+  guncelleme        DateTime  @updatedAt @db.Timestamptz(6)
 
-  ogrenci      Ogrenci?
-  islemKayitlari IslemKaydi[]
+  ogrenci                  Ogrenci?
+  sifreBaglantilari        SifreBaglantisi[]
+  islemKayitlari           IslemKaydi[]
+  olusturduguPlanlar       PlanDersi[]             @relation("PlanOlusturan")
+  onayladigiPlanlar        PlanDersi[]             @relation("PlanOnaylayan")
+  olusturduguDenemeler     DersDenemesi[]          @relation("DenemeOlusturan")
+  onayladigiDenemeler      DersDenemesi[]          @relation("DenemeOnaylayan")
+  girdigiGanolar           AnadalGanoKaydi[]
+  yukledigiBelgeler        Belge[]                 @relation("BelgeYukleyen")
+  onayladigiBelgeler       Belge[]                 @relation("BelgeOnaylayan")
+  istedigiBelgeler         BelgeTalebi[]
+  gonderdigiMesajlar       Mesaj[]
+  bildirimler              Bildirim[]
+  yazdigiNotlar            KoordinatorNotu[]
+  girdigiAyarlar           KuralAyari[]
+  kapattigiUyarilar        Uyari[]
+  verdigiKararlar          Karar[]
+  yanitladigiDersTalepleri KatalogDisiDersTalebi[]
+  girdigiIzinler           IzinliDonem[]
 
   @@map("kullanici")
 }
 
-// ---------- Temel tanımlar ----------
+// Koordinatör hesap açınca okul e-postasına tek kullanımlık, süreli bağlantı gider.
+// Bağlantının kendisi değil, SHA-256 özeti saklanır.
+model SifreBaglantisi {
+  id            String              @id @default(uuid()) @db.Uuid
+  kullaniciId   String              @map("kullanici_id") @db.Uuid
+  tokenOzeti    String              @unique @map("token_ozeti") @db.Char(64)
+  tur           SifreBaglantisiTuru
+  sonGecerlilik DateTime            @map("son_gecerlilik") @db.Timestamptz(6)
+  kullanilma    DateTime?           @db.Timestamptz(6)
+  olusturma     DateTime            @default(now()) @db.Timestamptz(6)
+
+  kullanici Kullanici @relation(fields: [kullaniciId], references: [id], onDelete: Restrict)
+
+  @@index([kullaniciId])
+  @@map("sifre_baglantisi")
+}
+
+// =====================================================================
+// Temel tanımlar: bölüm, dönem, ders kataloğu, protokol
+// =====================================================================
 
 model Bolum {
-  id  String @id @default(uuid()) @db.Uuid
-  kod String @unique // ör. EEM
-  ad  String
+  id    String  @id @default(uuid()) @db.Uuid
+  kod   String  @unique // ör. EEM
+  ad    String
+  aktif Boolean @default(true)
 
   ogrenciler  Ogrenci[]
   protokoller Protokol[]
@@ -102,14 +249,17 @@ model Bolum {
 
 model Donem {
   id          String    @id @default(uuid()) @db.Uuid
-  akademikYil String    // ör. 2026-2027
+  akademikYil String    @map("akademik_yil") // ör. 2026-2027
   tur         DonemTuru
   baslangic   DateTime? @db.Date
   bitis       DateTime? @db.Date
 
-  kabulEdilenOgrenciler Ogrenci[]      @relation("KabulDonemi")
-  alinanDenemeler       DersDenemesi[] @relation("AlinanDonem")
-  gecilenDenemeler      DersDenemesi[] @relation("GecilenDonem")
+  kabulEdilenOgrenciler Ogrenci[]         @relation("KabulDonemi")
+  alinanDenemeler       DersDenemesi[]    @relation("AlinanDonem")
+  gecilenDenemeler      DersDenemesi[]    @relation("GecilenDonem")
+  ganoKayitlari         AnadalGanoKaydi[]
+  belgeler              Belge[]
+  izinler               IzinliDonem[]
 
   @@unique([akademikYil, tur])
   @@map("donem")
@@ -120,156 +270,496 @@ model Ders {
   kod         String   @unique
   ad          String
   akts        Int
-  ulusalKredi Int?
+  ulusalKredi Int?     @map("ulusal_kredi")
   yariyil     Int
   tur         DersTuru
   aktif       Boolean  @default(true) // silinmez, pasife alınır
+  olusturma   DateTime @default(now()) @db.Timestamptz(6)
+  guncelleme  DateTime @updatedAt @db.Timestamptz(6)
 
   protokolSatirlari ProtokolSatiri[]
   ozelSartlar       OzelSart[]
   planDersleri      PlanDersi[]
+  dersTalepleri     KatalogDisiDersTalebi[]
 
   @@map("ders")
 }
 
-// ---------- Öğrenci ----------
-
-model Ogrenci {
-  id            String        @id @default(uuid()) @db.Uuid
-  ogrenciNo     String        @unique // anadal öğrenci no: benzersiz anahtar
-  adSoyad       String
-  eposta        String        @unique // okul e-postası
-  programTuru   ProgramTuru
-  anadalBolumId String        @db.Uuid
-  kabulDonemId  String        @db.Uuid
-  capOgrenciNo  String?       // FORM01'deki ayrı numara
-  durum         OgrenciDurumu @default(AKTIF)
-  kullaniciId   String?       @unique @db.Uuid // hesap açılınca bağlanır
-  olusturma     DateTime      @default(now())
-  guncelleme    DateTime      @updatedAt
-
-  anadalBolum  Bolum      @relation(fields: [anadalBolumId], references: [id])
-  kabulDonemi  Donem      @relation("KabulDonemi", fields: [kabulDonemId], references: [id])
-  kullanici    Kullanici? @relation(fields: [kullaniciId], references: [id])
-  planDersleri PlanDersi[]
-
-  @@map("ogrenci")
-}
-
-// ---------- Protokol (anadal bölümüne göre alınacak dersler) ----------
-
+// ÇAP protokolü anadal bölümüne göredir. YDP ders listesi bölümden bağımsızdır (bolumId boş).
 model Protokol {
   id          String      @id @default(uuid()) @db.Uuid
-  bolumId     String      @db.Uuid
-  programTuru ProgramTuru
+  bolumId     String?     @map("bolum_id") @db.Uuid
+  programTuru ProgramTuru @map("program_turu")
   ad          String
+  aktif       Boolean     @default(true)
+  olusturma   DateTime    @default(now()) @db.Timestamptz(6)
 
-  bolum       Bolum            @relation(fields: [bolumId], references: [id])
+  bolum       Bolum?           @relation(fields: [bolumId], references: [id], onDelete: Restrict)
   satirlar    ProtokolSatiri[]
   ozelSartlar OzelSart[]
 
+  @@index([bolumId])
   @@map("protokol")
 }
 
-// Bir satır ya belirli bir derstir ya da seçmeli ders yuvasıdır (dersId boş, yuvaAdi dolu).
+// Bir satır ya belirli bir derstir (dersId) ya da seçmeli ders yuvasıdır (yuvaAdi + yuvaDersTuru).
 model ProtokolSatiri {
-  id         String  @id @default(uuid()) @db.Uuid
-  protokolId String  @db.Uuid
-  sira       Int
-  dersId     String? @db.Uuid
-  yuvaAdi    String?
-  yariyil    Int
-  akts       Int
-  ozelSartNo Int?
+  id           String    @id @default(uuid()) @db.Uuid
+  protokolId   String    @map("protokol_id") @db.Uuid
+  sira         Int
+  dersId       String?   @map("ders_id") @db.Uuid
+  yuvaAdi      String?   @map("yuva_adi")
+  yuvaDersTuru DersTuru? @map("yuva_ders_turu") // yuvayı hangi tür ders doldurur
+  yariyil      Int
+  akts         Int
+  ozelSartNo   Int?      @map("ozel_sart_no")
 
-  protokol     Protokol    @relation(fields: [protokolId], references: [id])
-  ders         Ders?       @relation(fields: [dersId], references: [id])
+  protokol     Protokol    @relation(fields: [protokolId], references: [id], onDelete: Restrict)
+  ders         Ders?       @relation(fields: [dersId], references: [id], onDelete: Restrict)
   planDersleri PlanDersi[]
 
   @@unique([protokolId, sira])
+  @@index([dersId])
   @@map("protokol_satiri")
 }
 
 // Anadalda geçilen ders, BM'deki dersin yerine sayılır (muafiyet).
 model OzelSart {
   id             String @id @default(uuid()) @db.Uuid
-  protokolId     String @db.Uuid
+  protokolId     String @map("protokol_id") @db.Uuid
   no             Int
-  anadalDersKodu String
-  anadalDersAdi  String
-  bmDersId       String @db.Uuid
+  anadalDersKodu String @map("anadal_ders_kodu")
+  anadalDersAdi  String @map("anadal_ders_adi")
+  bmDersId       String @map("bm_ders_id") @db.Uuid
 
-  protokol Protokol @relation(fields: [protokolId], references: [id])
-  bmDers   Ders     @relation(fields: [bmDersId], references: [id])
+  protokol Protokol @relation(fields: [protokolId], references: [id], onDelete: Restrict)
+  bmDers   Ders     @relation(fields: [bmDersId], references: [id], onDelete: Restrict)
 
   @@unique([protokolId, no])
+  @@index([bmDersId])
   @@map("ozel_sart")
 }
 
-// ---------- Ders takibi ----------
+// =====================================================================
+// Öğrenci
+// =====================================================================
+
+model Ogrenci {
+  id            String        @id @default(uuid()) @db.Uuid
+  ogrenciNo     String        @unique @map("ogrenci_no") // anadal öğrenci no: benzersiz anahtar
+  adSoyad       String        @map("ad_soyad")
+  eposta        String        @unique // okul e-postası
+  programTuru   ProgramTuru   @map("program_turu")
+  anadalBolumId String        @map("anadal_bolum_id") @db.Uuid
+  kabulDonemId  String        @map("kabul_donem_id") @db.Uuid
+  capOgrenciNo  String?       @unique @map("cap_ogrenci_no") // FORM01'deki ayrı numara
+  durum         OgrenciDurumu @default(AKTIF)
+  kaynak        VeriKaynagi   @default(KOORDINATOR)
+  kullaniciId   String?       @unique @map("kullanici_id") @db.Uuid // hesap açılınca bağlanır
+  olusturma     DateTime      @default(now()) @db.Timestamptz(6)
+  guncelleme    DateTime      @updatedAt @db.Timestamptz(6)
+
+  anadalBolum        Bolum                   @relation(fields: [anadalBolumId], references: [id], onDelete: Restrict)
+  kabulDonemi        Donem                   @relation("KabulDonemi", fields: [kabulDonemId], references: [id], onDelete: Restrict)
+  kullanici          Kullanici?              @relation(fields: [kullaniciId], references: [id], onDelete: Restrict)
+  planDersleri       PlanDersi[]
+  ganoKayitlari      AnadalGanoKaydi[]
+  belgeler           Belge[]
+  belgeTalepleri     BelgeTalebi[]
+  yazismalar         Yazisma[]
+  koordinatorNotlari KoordinatorNotu[]
+  uyarilar           Uyari[]
+  kararlar           Karar[]
+  dersTalepleri      KatalogDisiDersTalebi[]
+  izinliDonemler     IzinliDonem[]
+
+  @@index([anadalBolumId])
+  @@index([kabulDonemId])
+  @@map("ogrenci")
+}
+
+// Kayıt dondurma veya mazeretli (izinli) dönemler.
+// Ç3, Ç4 ve Y4 kuralları bu dönemleri "ders almama" hesabından çıkarır.
+model IzinliDonem {
+  id             String    @id @default(uuid()) @db.Uuid
+  ogrenciId      String    @map("ogrenci_id") @db.Uuid
+  donemId        String    @map("donem_id") @db.Uuid
+  tur            IzinTuru
+  aciklama       String?
+  belgeId        String?   @map("belge_id") @db.Uuid // yönetim kurulu kararı vb.
+  girenId        String    @map("giren_id") @db.Uuid // yalnız koordinatör
+  iptal          Boolean   @default(false)
+  iptalGerekcesi String?   @map("iptal_gerekcesi")
+  iptalTarihi    DateTime? @map("iptal_tarihi") @db.Timestamptz(6)
+  olusturma      DateTime  @default(now()) @db.Timestamptz(6)
+
+  ogrenci Ogrenci   @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  donem   Donem     @relation(fields: [donemId], references: [id], onDelete: Restrict)
+  belge   Belge?    @relation(fields: [belgeId], references: [id], onDelete: Restrict)
+  giren   Kullanici @relation(fields: [girenId], references: [id], onDelete: Restrict)
+
+  @@index([ogrenciId])
+  @@map("izinli_donem")
+}
+
+// Anadal GANO'sunu yalnız koordinatör girer ve kaynağını yazar.
+model AnadalGanoKaydi {
+  id             String      @id @default(uuid()) @db.Uuid
+  ogrenciId      String      @map("ogrenci_id") @db.Uuid
+  donemId        String      @map("donem_id") @db.Uuid
+  deger          Decimal     @db.Decimal(3, 2)
+  kaynak         GanoKaynagi
+  kaynakAciklama String?     @map("kaynak_aciklama")
+  girenId        String      @map("giren_id") @db.Uuid // yalnız koordinatör
+  iptal          Boolean     @default(false)
+  iptalGerekcesi String?     @map("iptal_gerekcesi")
+  iptalTarihi    DateTime?   @map("iptal_tarihi") @db.Timestamptz(6)
+  olusturma      DateTime    @default(now()) @db.Timestamptz(6)
+
+  ogrenci Ogrenci   @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  donem   Donem     @relation(fields: [donemId], references: [id], onDelete: Restrict)
+  giren   Kullanici @relation(fields: [girenId], references: [id], onDelete: Restrict)
+
+  @@index([ogrenciId])
+  @@map("anadal_gano_kaydi")
+}
+
+// =====================================================================
+// Ders takibi
+// =====================================================================
 
 // Öğrencinin alacağı ders (ders planı satırı)
 model PlanDersi {
   id               String      @id @default(uuid()) @db.Uuid
-  ogrenciId        String      @db.Uuid
-  dersId           String      @db.Uuid
-  protokolSatiriId String?     @db.Uuid // hangi protokol satırını/yuvasını karşılıyor
+  ogrenciId        String      @map("ogrenci_id") @db.Uuid
+  dersId           String      @map("ders_id") @db.Uuid
+  protokolSatiriId String?     @map("protokol_satiri_id") @db.Uuid // hangi protokol satırını/yuvasını karşılıyor
   durum            DersDurumu  @default(PLANLANDI)
-  onayDurumu       OnayDurumu  @default(ONAY_BEKLIYOR)
+  onayDurumu       OnayDurumu  @default(ONAY_BEKLIYOR) @map("onay_durumu")
   kaynak           VeriKaynagi
-  gerekce          String?     // koordinatörün ekleme gerekçesi
-  redGerekcesi     String?
-  cikarmaTarihi    DateTime?
-  cikarmaGerekcesi String?
-  onayTarihi       DateTime?
-  olusturma        DateTime    @default(now())
-  guncelleme       DateTime    @updatedAt
+  eklemeGerekcesi  String?     @map("ekleme_gerekcesi") // koordinatör eklerse
+  cikarmaGerekcesi String?     @map("cikarma_gerekcesi")
+  cikarmaTarihi    DateTime?   @map("cikarma_tarihi") @db.Timestamptz(6)
+  muafiyetBelgeId  String?     @map("muafiyet_belge_id") @db.Uuid // durum MUAF ise
+  redGerekcesi     String?     @map("red_gerekcesi")
+  iptalGerekcesi   String?     @map("iptal_gerekcesi")
+  iptalTarihi      DateTime?   @map("iptal_tarihi") @db.Timestamptz(6)
+  olusturanId      String      @map("olusturan_id") @db.Uuid
+  onaylayanId      String?     @map("onaylayan_id") @db.Uuid
+  onayTarihi       DateTime?   @map("onay_tarihi") @db.Timestamptz(6)
+  olusturma        DateTime    @default(now()) @db.Timestamptz(6)
+  guncelleme       DateTime    @updatedAt @db.Timestamptz(6)
 
-  ogrenci        Ogrenci         @relation(fields: [ogrenciId], references: [id])
-  ders           Ders            @relation(fields: [dersId], references: [id])
-  protokolSatiri ProtokolSatiri? @relation(fields: [protokolSatiriId], references: [id])
+  ogrenci        Ogrenci         @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  ders           Ders            @relation(fields: [dersId], references: [id], onDelete: Restrict)
+  protokolSatiri ProtokolSatiri? @relation(fields: [protokolSatiriId], references: [id], onDelete: Restrict)
+  muafiyetBelge  Belge?          @relation("MuafiyetBelgesi", fields: [muafiyetBelgeId], references: [id], onDelete: Restrict)
+  olusturan      Kullanici       @relation("PlanOlusturan", fields: [olusturanId], references: [id], onDelete: Restrict)
+  onaylayan      Kullanici?      @relation("PlanOnaylayan", fields: [onaylayanId], references: [id], onDelete: Restrict)
   denemeler      DersDenemesi[]
 
+  @@index([ogrenciId])
+  @@index([dersId])
   @@map("plan_dersi")
 }
 
 // Bir dersin her alınışı ayrı satırdır.
 model DersDenemesi {
-  id             String      @id @default(uuid()) @db.Uuid
-  planDersiId    String      @db.Uuid
-  alinanDonemId  String      @db.Uuid
-  harfNotu       String?     // AA, BA, ... FF
-  sonuc          DersDurumu  @default(ALINDI) // ALINDI, GECTI, KALDI
-  gecilenDonemId String?     @db.Uuid
-  onayDurumu     OnayDurumu  @default(ONAY_BEKLIYOR)
-  kaynak         VeriKaynagi
-  redGerekcesi   String?
-  onayTarihi     DateTime?
-  olusturma      DateTime    @default(now())
-  guncelleme     DateTime    @updatedAt
+  id                String      @id @default(uuid()) @db.Uuid
+  planDersiId       String      @map("plan_dersi_id") @db.Uuid
+  alinanDonemId     String      @map("alinan_donem_id") @db.Uuid
+  harfNotu          String?     @map("harf_notu") // geçerli harfler kural ayarındadır
+  sonuc             DersDurumu  @default(ALINDI) // ALINDI, GECTI, KALDI
+  gecilenDonemId    String?     @map("gecilen_donem_id") @db.Uuid
+  transkriptBelgeId String?     @map("transkript_belge_id") @db.Uuid // S2: öğrenci notu transkriptsiz giremez
+  onayDurumu        OnayDurumu  @default(ONAY_BEKLIYOR) @map("onay_durumu")
+  kaynak            VeriKaynagi
+  redGerekcesi      String?     @map("red_gerekcesi")
+  iptalGerekcesi    String?     @map("iptal_gerekcesi")
+  iptalTarihi       DateTime?   @map("iptal_tarihi") @db.Timestamptz(6)
+  olusturanId       String      @map("olusturan_id") @db.Uuid
+  onaylayanId       String?     @map("onaylayan_id") @db.Uuid
+  onayTarihi        DateTime?   @map("onay_tarihi") @db.Timestamptz(6)
+  olusturma         DateTime    @default(now()) @db.Timestamptz(6)
+  guncelleme        DateTime    @updatedAt @db.Timestamptz(6)
 
-  planDersi    PlanDersi @relation(fields: [planDersiId], references: [id])
-  alinanDonem  Donem     @relation("AlinanDonem", fields: [alinanDonemId], references: [id])
-  gecilenDonem Donem?    @relation("GecilenDonem", fields: [gecilenDonemId], references: [id])
+  planDersi       PlanDersi  @relation(fields: [planDersiId], references: [id], onDelete: Restrict)
+  alinanDonem     Donem      @relation("AlinanDonem", fields: [alinanDonemId], references: [id], onDelete: Restrict)
+  gecilenDonem    Donem?     @relation("GecilenDonem", fields: [gecilenDonemId], references: [id], onDelete: Restrict)
+  transkriptBelge Belge?     @relation("DenemeTranskripti", fields: [transkriptBelgeId], references: [id], onDelete: Restrict)
+  olusturan       Kullanici  @relation("DenemeOlusturan", fields: [olusturanId], references: [id], onDelete: Restrict)
+  onaylayan       Kullanici? @relation("DenemeOnaylayan", fields: [onaylayanId], references: [id], onDelete: Restrict)
 
+  @@index([planDersiId])
+  @@index([alinanDonemId])
   @@map("ders_denemesi")
 }
 
-// ---------- İşlem kaydı (yalnız eklenir; veritabanı tetikleyicisi güncelleme ve silmeyi engeller) ----------
+// Katalogda olmayan ders için öğrencinin koordinatöre talebi (S3)
+model KatalogDisiDersTalebi {
+  id            String           @id @default(uuid()) @db.Uuid
+  ogrenciId     String           @map("ogrenci_id") @db.Uuid
+  dersKodu      String?          @map("ders_kodu")
+  dersAdi       String           @map("ders_adi")
+  akts          Int?
+  aciklama      String
+  durum         DersTalebiDurumu @default(BEKLIYOR)
+  yanit         String?
+  yanitlayanId  String?          @map("yanitlayan_id") @db.Uuid
+  yanitTarihi   DateTime?        @map("yanit_tarihi") @db.Timestamptz(6)
+  eklenenDersId String?          @map("eklenen_ders_id") @db.Uuid // kabul edilince kataloğa eklenen ders
+  olusturma     DateTime         @default(now()) @db.Timestamptz(6)
+  guncelleme    DateTime         @updatedAt @db.Timestamptz(6)
+
+  ogrenci     Ogrenci    @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  yanitlayan  Kullanici? @relation(fields: [yanitlayanId], references: [id], onDelete: Restrict)
+  eklenenDers Ders?      @relation(fields: [eklenenDersId], references: [id], onDelete: Restrict)
+
+  @@index([ogrenciId])
+  @@map("katalog_disi_ders_talebi")
+}
+
+// =====================================================================
+// Belgeler
+// =====================================================================
+
+// Yeni yükleme yeni satır açar (oncekiSurumId); eski sürüm silinmez.
+// Dosya, web kökü dışında rastgele adla (depoAdi) saklanır.
+model Belge {
+  id             String      @id @default(uuid()) @db.Uuid
+  ogrenciId      String      @map("ogrenci_id") @db.Uuid
+  tur            BelgeTuru
+  donemId        String?     @map("donem_id") @db.Uuid // transkript gibi döneme bağlı belgeler
+  belgeTalebiId  String?     @map("belge_talebi_id") @db.Uuid
+  orijinalAd     String      @map("orijinal_ad")
+  depoAdi        String      @unique @map("depo_adi")
+  mimeTuru       String      @map("mime_turu")
+  boyut          Int // bayt
+  sha256         String      @db.Char(64)
+  surumNo        Int         @default(1) @map("surum_no")
+  oncekiSurumId  String?     @unique @map("onceki_surum_id") @db.Uuid
+  onayDurumu     OnayDurumu  @default(ONAY_BEKLIYOR) @map("onay_durumu")
+  kaynak         VeriKaynagi
+  redGerekcesi   String?     @map("red_gerekcesi")
+  iptalGerekcesi String?     @map("iptal_gerekcesi")
+  iptalTarihi    DateTime?   @map("iptal_tarihi") @db.Timestamptz(6)
+  yukleyenId     String      @map("yukleyen_id") @db.Uuid
+  onaylayanId    String?     @map("onaylayan_id") @db.Uuid
+  onayTarihi     DateTime?   @map("onay_tarihi") @db.Timestamptz(6)
+  olusturma      DateTime    @default(now()) @db.Timestamptz(6)
+  guncelleme     DateTime    @updatedAt @db.Timestamptz(6)
+
+  ogrenci          Ogrenci        @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  donem            Donem?         @relation(fields: [donemId], references: [id], onDelete: Restrict)
+  belgeTalebi      BelgeTalebi?   @relation(fields: [belgeTalebiId], references: [id], onDelete: Restrict)
+  oncekiSurum      Belge?         @relation("BelgeSurumu", fields: [oncekiSurumId], references: [id], onDelete: Restrict)
+  sonrakiSurum     Belge?         @relation("BelgeSurumu")
+  yukleyen         Kullanici      @relation("BelgeYukleyen", fields: [yukleyenId], references: [id], onDelete: Restrict)
+  onaylayan        Kullanici?     @relation("BelgeOnaylayan", fields: [onaylayanId], references: [id], onDelete: Restrict)
+  muafPlanDersleri PlanDersi[]    @relation("MuafiyetBelgesi")
+  notDenemeleri    DersDenemesi[] @relation("DenemeTranskripti")
+  mesajlar         Mesaj[]
+  izinliDonemler   IzinliDonem[]
+  kararlar         Karar[]
+
+  @@index([ogrenciId, tur])
+  @@map("belge")
+}
+
+// Koordinatörün öğrenciden ek belge veya bilgi istemesi
+model BelgeTalebi {
+  id         String            @id @default(uuid()) @db.Uuid
+  ogrenciId  String            @map("ogrenci_id") @db.Uuid
+  isteyenId  String            @map("isteyen_id") @db.Uuid
+  aciklama   String
+  belgeTuru  BelgeTuru?        @map("belge_turu")
+  sonTarih   DateTime?         @map("son_tarih") @db.Date
+  durum      BelgeTalebiDurumu @default(BEKLIYOR)
+  yanit      String? // öğrencinin bilgi yanıtı
+  kapanis    DateTime?         @db.Timestamptz(6)
+  olusturma  DateTime          @default(now()) @db.Timestamptz(6)
+  guncelleme DateTime          @updatedAt @db.Timestamptz(6)
+
+  ogrenci  Ogrenci   @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  isteyen  Kullanici @relation(fields: [isteyenId], references: [id], onDelete: Restrict)
+  belgeler Belge[]
+
+  @@index([ogrenciId])
+  @@map("belge_talebi")
+}
+
+// =====================================================================
+// Mesajlaşma ve bildirimler
+// =====================================================================
+
+model Yazisma {
+  id        String   @id @default(uuid()) @db.Uuid
+  ogrenciId String   @map("ogrenci_id") @db.Uuid
+  konu      String
+  olusturma DateTime @default(now()) @db.Timestamptz(6)
+
+  ogrenci  Ogrenci @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  mesajlar Mesaj[]
+
+  @@index([ogrenciId])
+  @@map("yazisma")
+}
+
+// Mesajlar kalıcıdır: yalnız okunma zamanı bir kez yazılabilir.
+model Mesaj {
+  id           String    @id @default(uuid()) @db.Uuid
+  yazismaId    String    @map("yazisma_id") @db.Uuid
+  gonderenId   String    @map("gonderen_id") @db.Uuid
+  metin        String
+  ekBelgeId    String?   @map("ek_belge_id") @db.Uuid
+  okunmaZamani DateTime? @map("okunma_zamani") @db.Timestamptz(6)
+  olusturma    DateTime  @default(now()) @db.Timestamptz(6)
+
+  yazisma  Yazisma   @relation(fields: [yazismaId], references: [id], onDelete: Restrict)
+  gonderen Kullanici @relation(fields: [gonderenId], references: [id], onDelete: Restrict)
+  ekBelge  Belge?    @relation(fields: [ekBelgeId], references: [id], onDelete: Restrict)
+
+  @@index([yazismaId, olusturma])
+  @@map("mesaj")
+}
+
+// Uygulama içi bildirim (e-posta da gönderilir)
+model Bildirim {
+  id               String       @id @default(uuid()) @db.Uuid
+  aliciId          String       @map("alici_id") @db.Uuid
+  tur              BildirimTuru
+  baslik           String
+  metin            String
+  varlik           String? // ör. Mesaj
+  varlikId         String?      @map("varlik_id")
+  okunma           DateTime?    @db.Timestamptz(6)
+  epostaGonderildi DateTime?    @map("eposta_gonderildi") @db.Timestamptz(6)
+  olusturma        DateTime     @default(now()) @db.Timestamptz(6)
+
+  alici Kullanici @relation(fields: [aliciId], references: [id], onDelete: Restrict)
+
+  @@index([aliciId, okunma])
+  @@map("bildirim")
+}
+
+// Öğrenci kartında yalnız koordinatörün gördüğü not
+model KoordinatorNotu {
+  id             String    @id @default(uuid()) @db.Uuid
+  ogrenciId      String    @map("ogrenci_id") @db.Uuid
+  yazanId        String    @map("yazan_id") @db.Uuid
+  metin          String
+  iptal          Boolean   @default(false)
+  iptalGerekcesi String?   @map("iptal_gerekcesi")
+  iptalTarihi    DateTime? @map("iptal_tarihi") @db.Timestamptz(6)
+  olusturma      DateTime  @default(now()) @db.Timestamptz(6)
+
+  ogrenci Ogrenci   @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  yazan   Kullanici @relation(fields: [yazanId], references: [id], onDelete: Restrict)
+
+  @@index([ogrenciId])
+  @@map("koordinator_notu")
+}
+
+// =====================================================================
+// Kurallar, uyarılar, kararlar
+// =====================================================================
+
+// Yönerge sayıları koda gömülmez. Her değişiklik yeni bir satırdır (sürüm); satırlar güncellenmez.
+// Geçerli değer: aynı anahtar için gecerlilikBaslangic'i bugünden önceki en yeni satır.
+model KuralAyari {
+  id                  String   @id @default(uuid()) @db.Uuid
+  anahtar             String // ör. cap.anadal_gano_esik
+  deger               Json
+  aciklama            String
+  dayanak             String? // ör. ÇAP Yön. Md. 9/1-e
+  gecerlilikBaslangic DateTime @map("gecerlilik_baslangic") @db.Timestamptz(6)
+  girenId             String   @map("giren_id") @db.Uuid
+  olusturma           DateTime @default(now()) @db.Timestamptz(6)
+
+  giren    Kullanici    @relation(fields: [girenId], references: [id], onDelete: Restrict)
+  uyarilar UyariAyari[]
+
+  @@unique([anahtar, gecerlilikBaslangic])
+  @@map("kural_ayari")
+}
+
+// Kural kontrolünün sonucu. Hesaplandığı ayar sürümleriyle saklanır;
+// sonradan yalnız kapatılabilir, içeriği değiştirilemez.
+model Uyari {
+  id                String      @id @default(uuid()) @db.Uuid
+  ogrenciId         String      @map("ogrenci_id") @db.Uuid
+  kuralKodu         String      @map("kural_kodu") // TASLAK §6: Ç1–Ç7, Y1–Y7, S1–S4
+  mesaj             String
+  hesaplananDeger   Json?       @map("hesaplanan_deger")
+  durum             UyariDurumu @default(ACIK)
+  kapatanId         String?     @map("kapatan_id") @db.Uuid
+  kapatmaAciklamasi String?     @map("kapatma_aciklamasi")
+  kapanis           DateTime?   @db.Timestamptz(6)
+  olusturma         DateTime    @default(now()) @db.Timestamptz(6)
+
+  ogrenci  Ogrenci      @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  kapatan  Kullanici?   @relation(fields: [kapatanId], references: [id], onDelete: Restrict)
+  ayarlar  UyariAyari[]
+  kararlar Karar[]
+
+  @@index([ogrenciId, durum])
+  @@map("uyari")
+}
+
+// Uyarının hesaplanmasında kullanılan ayar sürümleri
+model UyariAyari {
+  uyariId      String @map("uyari_id") @db.Uuid
+  kuralAyariId String @map("kural_ayari_id") @db.Uuid
+
+  uyari      Uyari      @relation(fields: [uyariId], references: [id], onDelete: Restrict)
+  kuralAyari KuralAyari @relation(fields: [kuralAyariId], references: [id], onDelete: Restrict)
+
+  @@id([uyariId, kuralAyariId])
+  @@map("uyari_ayari")
+}
+
+// Mezuniyet, sertifika veya kayıt silme kararı. Sistem uyarır, kararı koordinatör verir.
+model Karar {
+  id             String    @id @default(uuid()) @db.Uuid
+  ogrenciId      String    @map("ogrenci_id") @db.Uuid
+  tur            KararTuru
+  gerekce        String
+  kararTarihi    DateTime  @map("karar_tarihi") @db.Date
+  uyariId        String?   @map("uyari_id") @db.Uuid
+  belgeId        String?   @map("belge_id") @db.Uuid // ör. yönetim kurulu yazısı
+  verenId        String    @map("veren_id") @db.Uuid // yalnız koordinatör
+  iptal          Boolean   @default(false)
+  iptalGerekcesi String?   @map("iptal_gerekcesi")
+  iptalTarihi    DateTime? @map("iptal_tarihi") @db.Timestamptz(6)
+  olusturma      DateTime  @default(now()) @db.Timestamptz(6)
+
+  ogrenci Ogrenci   @relation(fields: [ogrenciId], references: [id], onDelete: Restrict)
+  uyari   Uyari?    @relation(fields: [uyariId], references: [id], onDelete: Restrict)
+  belge   Belge?    @relation(fields: [belgeId], references: [id], onDelete: Restrict)
+  veren   Kullanici @relation(fields: [verenId], references: [id], onDelete: Restrict)
+
+  @@index([ogrenciId])
+  @@map("karar")
+}
+
+// =====================================================================
+// İşlem kaydı (yalnız eklenir)
+// =====================================================================
 
 model IslemKaydi {
   id          String   @id @default(uuid()) @db.Uuid
-  zaman       DateTime @default(now())
-  kullaniciId String?  @db.Uuid // başarısız girişte boş olabilir
-  eylem       String   // ör. GIRIS_BASARILI, PLAN_ONAYLANDI
-  varlik      String?  // ör. PlanDersi
-  varlikId    String?
-  eskiDeger   Json?
-  yeniDeger   Json?
-  ipAdresi    String?
+  zaman       DateTime @default(now()) @db.Timestamptz(6)
+  kullaniciId String?  @map("kullanici_id") @db.Uuid // başarısız girişte boş olabilir
+  eylem       String // ör. GIRIS_BASARILI, PLAN_ONAYLANDI
+  varlik      String? // ör. PlanDersi
+  varlikId    String?  @map("varlik_id")
+  eskiDeger   Json?    @map("eski_deger")
+  yeniDeger   Json?    @map("yeni_deger")
+  ipAdresi    String?  @map("ip_adresi")
 
-  kullanici Kullanici? @relation(fields: [kullaniciId], references: [id])
+  kullanici Kullanici? @relation(fields: [kullaniciId], references: [id], onDelete: Restrict)
 
   @@index([varlik, varlikId])
+  @@index([zaman])
   @@map("islem_kaydi")
 }
