@@ -2,12 +2,18 @@
 
 Selçuk Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği Bölümü için Çift Anadal (ÇAP) ve Yandal (YDP) öğrenci takip sistemi. Tasarım: [docs/TASLAK.md](docs/TASLAK.md).
 
+**Şu anki aşama:** veritabanı (şema, kurallar, örnek veri). Sunucu ve arayüz henüz yok.
+
 ## Gerekenler
 - Node.js 24 LTS
 - PostgreSQL 17
 
 ## İlk kurulum
-1. Bağımlılıkları kurun: `npm run kurulum`
+1. Bağımlılıkları kurun:
+   ```
+   cd server
+   npm install
+   ```
 2. Veritabanını Türkçe dil desteğiyle oluşturun (postgres kullanıcısıyla):
    ```sql
    CREATE ROLE cap_app LOGIN CREATEDB PASSWORD '...';
@@ -19,19 +25,19 @@ Selçuk Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği Bölümü i
 3. `server/.env.example` dosyasını `server/.env` olarak kopyalayın ve veritabanı bağlantısını yazın.
 4. Tabloları oluşturun ve örnek veriyi yükleyin:
    ```
-   cd server
    npx prisma migrate deploy
    npm run db:seed
    ```
 
-## Çalıştırma
+## Veritabanını görüntüleme
 ```
-npm run dev
+cd server
+npm run db:studio
 ```
-API: http://localhost:3000 (arayüz henüz yok)
+http://localhost:5555 adresinde tablolar açılır.
 
-## Deneme hesapları (sentetik veri)
-Tüm hesapların şifresi: `Demo.2026!`
+## Örnek veri (sentetik)
+Deneme hesapları veritabanında hazırdır (giriş ekranı sonraki aşamada). Şifreleri: `Demo.2026!`
 
 | E-posta | Rol | Not |
 | --- | --- | --- |
@@ -44,13 +50,14 @@ Tüm hesapların şifresi: `Demo.2026!`
 
 ## Testler
 ```
+cd server
 npm test
 ```
-Testler ayrı bir veritabanında (`cap_otomasyonu_test`) çalışır.
+Veritabanı kurallarını sınar; ayrı bir veritabanında (`cap_otomasyonu_test`) çalışır ve iz bırakmaz.
 
 ## Klasörler
-- `server/prisma/schema.prisma`: veritabanı şeması
+- `server/prisma/schema.prisma`: veritabanı şeması (25 tablo)
+- `server/prisma/migrations/`: tabloları oluşturan ve veritabanı kurallarını (CHECK, tetikleyiciler) ekleyen SQL
+- `server/prisma/seed.js`: örnek veri
 - `server/prisma/veri/`: ders kataloğu ve EEM → BM protokolü (CSV)
-- `server/src/routes/`: API uçları
-- `server/src/services/`: iş mantığı; tüm veri yazma işlemleri buradan geçer
-- `server/src/middleware/`: oturum, rol ve CSRF kontrolü
+- `server/tests/veritabani.test.js`: veritabanı kuralı testleri

@@ -22,7 +22,7 @@ Bir özellik bitince kutusu işaretlenir. Demo kapsamındakiler **[30 Ekim]** il
 - [ ] OBİS bağlantısı yok, ama tüm yazmalar tek servis katmanından geçer. Öğrenci no benzersiz anahtardır; CSV ile içe aktarılabilir
 
 **Kullanıcılar ve giriş**
-- [x] Yalnız 3 rol vardır: Koordinatör, Öğrenci, Bölüm başkanı (salt okunur) **[30 Ekim]**
+- [ ] Yalnız 3 rol vardır: Koordinatör, Öğrenci, Bölüm başkanı (salt okunur) **[30 Ekim]**
 - [ ] Hesapları koordinatör açar; öğrenci kendi kendine kayıt olamaz. Giriş güvenlidir **[30 Ekim]**
 
 **Koordinatör**
@@ -106,7 +106,7 @@ Her ayar değişikliği yeni bir sürüm satırı olarak eklenir (geçerlilik ba
   - Belgenin dosyası, mesajın metni ve uyarının içeriği değişmez.
   - Kısmi tekil indeksler: aynı ders etkin planda bir kez; dönem başına tek GANO ve tek izin; tür başına tek geçerli karar.
   - Testler: `server/tests/veritabani.test.js` (her deneme geri alınan bir transaction içinde).
-- **Oturum:** 2 saatlik JWT, httpOnly + SameSite=Strict çerezde. 5 hatalı denemede hesap 15 dk kilitlenir; IP başına 15 dk'da 20 giriş denemesi. CSRF: double-submit jeton (`csrf` çerezi + `X-CSRF-Token` başlığı).
+- **Oturum (planlanan; ilk sürümü commit `db5da49`'da):** 2 saatlik JWT, httpOnly + SameSite=Strict çerezde. 5 hatalı denemede hesap 15 dk kilitlenir; IP başına 15 dk'da 20 giriş denemesi. CSRF: double-submit jeton (`csrf` çerezi + `X-CSRF-Token` başlığı).
 - **Bilinen bağımlılık uyarısı:** `npm audit`, Prisma 6'nın yapılandırma paketindeki `deepmerge-ts` için yüksek seviye uyarı verir. Yalnız bizim yazdığımız yapılandırmayı işler, dışarıdan girdi almaz. Prisma 7'ye geçişte giderilecek; güvenlik raporuna eklenecek.
 - **Windows kurulum notu:** Sistem dili Türkçe olunca PostgreSQL kurulum programının `initdb` adımı başarısız olur. Çözüm: sunucuyu `initdb --locale=C --encoding=UTF8` ile elle başlatıp `pg_ctl register` ile servis olarak kaydetmek; Türkçe dil desteği veritabanı düzeyinde ICU `tr-TR` ile verilir.
 

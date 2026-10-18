@@ -1,7 +1,9 @@
 // Veritabanı kurallarının (CHECK, tetikleyici, tekil indeks) gerçekten çalıştığını sınar.
 // Her deneme bir transaction içinde yapılır ve geri alınır; test veritabanında iz bırakmaz.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { prisma } from '../src/lib/prisma.js';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 class GeriAl extends Error {}
 
