@@ -123,6 +123,21 @@ describe('Onay mantığı', () => {
     });
   });
 
+  it('geçilmiş ders listeden çıkarılamaz', async () => {
+    const gecilen = await prisma.planDersi.findFirstOrThrow({ where: { ogrenciId: k.mehmet.id, durum: 'GECTI' } });
+    await reddedilmeli((tx) => tx.planDersi.update({
+      where: { id: gecilen.id },
+      data: { durum: 'CIKARILDI', cikarmaGerekcesi: 'müfredat değişti', cikarmaTarihi: new Date() },
+    }), /çıkarılamaz/);
+  });
+
+  it('anadal mezuniyet dönemi kaydedilebilir', async () => {
+    await geriAlarakCalistir(async (tx) => {
+      const o = await tx.ogrenci.update({ where: { id: k.mehmet.id }, data: { anadalMezuniyetDonemId: k.donem.id } });
+      expect(o.anadalMezuniyetDonemId).toBe(k.donem.id);
+    });
+  });
+
   it('geçmiş aktarım onay beklemez', async () => {
     await reddedilmeli((tx) => tx.planDersi.create({ data: ogrenciPlani({ kaynak: 'GECMIS_AKTARIM', olusturanId: k.koordinator.id }) }),
       /plan_dersi_gecmis_aktarim/);

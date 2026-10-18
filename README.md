@@ -57,7 +57,7 @@ Veritabanı kurallarını sınar; ayrı bir veritabanında (`cap_otomasyonu_test
 
 ## Klasörler
 - `server/prisma/schema.prisma`: veritabanı şeması (25 tablo)
-- `server/prisma/migrations/`: tabloları oluşturan ve veritabanı kurallarını (CHECK, tetikleyiciler) ekleyen SQL
+- `server/prisma/migrations/`: tabloları oluşturan ve veritabanı kurallarını (CHECK, tetikleyiciler) ekleyen SQL (3 migration)
 - `server/prisma/seed.js`: örnek veri
 - `server/prisma/veri/`: ders kataloğu ve EEM → BM protokolü (CSV)
 - `server/tests/veritabani.test.js`: veritabanı kuralı testleri

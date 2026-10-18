@@ -255,6 +255,7 @@ model Donem {
   bitis       DateTime? @db.Date
 
   kabulEdilenOgrenciler Ogrenci[]         @relation("KabulDonemi")
+  anadalMezunlari       Ogrenci[]         @relation("AnadalMezuniyetDonemi")
   alinanDenemeler       DersDenemesi[]    @relation("AlinanDonem")
   gecilenDenemeler      DersDenemesi[]    @relation("GecilenDonem")
   ganoKayitlari         AnadalGanoKaydi[]
@@ -345,33 +346,37 @@ model OzelSart {
 // =====================================================================
 
 model Ogrenci {
-  id            String        @id @default(uuid()) @db.Uuid
-  ogrenciNo     String        @unique @map("ogrenci_no") // anadal öğrenci no: benzersiz anahtar
-  adSoyad       String        @map("ad_soyad")
-  eposta        String        @unique // okul e-postası
-  programTuru   ProgramTuru   @map("program_turu")
-  anadalBolumId String        @map("anadal_bolum_id") @db.Uuid
-  kabulDonemId  String        @map("kabul_donem_id") @db.Uuid
-  capOgrenciNo  String?       @unique @map("cap_ogrenci_no") // FORM01'deki ayrı numara
-  durum         OgrenciDurumu @default(AKTIF)
-  kaynak        VeriKaynagi   @default(KOORDINATOR)
-  kullaniciId   String?       @unique @map("kullanici_id") @db.Uuid // hesap açılınca bağlanır
-  olusturma     DateTime      @default(now()) @db.Timestamptz(6)
-  guncelleme    DateTime      @updatedAt @db.Timestamptz(6)
+  id                     String        @id @default(uuid()) @db.Uuid
+  ogrenciNo              String        @unique @map("ogrenci_no") // anadal öğrenci no: benzersiz anahtar
+  adSoyad                String        @map("ad_soyad")
+  eposta                 String        @unique // okul e-postası
+  programTuru            ProgramTuru   @map("program_turu")
+  anadalBolumId          String        @map("anadal_bolum_id") @db.Uuid
+  kabulDonemId           String        @map("kabul_donem_id") @db.Uuid
+  capOgrenciNo           String?       @unique @map("cap_ogrenci_no") // FORM01'deki ayrı numara
+  durum                  OgrenciDurumu @default(AKTIF)
+  kaynak                 VeriKaynagi   @default(KOORDINATOR)
+  kullaniciId            String?       @unique @map("kullanici_id") @db.Uuid // hesap açılınca bağlanır
+  // Anadaldan mezun olduğu dönem (koordinatör girer). Ç6 ve Y5 mezuniyet/sertifika şartı,
+  // Y6 ise mezuniyetten sonraki ek süre için kullanır.
+  anadalMezuniyetDonemId String?       @map("anadal_mezuniyet_donem_id") @db.Uuid
+  olusturma              DateTime      @default(now()) @db.Timestamptz(6)
+  guncelleme             DateTime      @updatedAt @db.Timestamptz(6)
 
-  anadalBolum        Bolum                   @relation(fields: [anadalBolumId], references: [id], onDelete: Restrict)
-  kabulDonemi        Donem                   @relation("KabulDonemi", fields: [kabulDonemId], references: [id], onDelete: Restrict)
-  kullanici          Kullanici?              @relation(fields: [kullaniciId], references: [id], onDelete: Restrict)
-  planDersleri       PlanDersi[]
-  ganoKayitlari      AnadalGanoKaydi[]
-  belgeler           Belge[]
-  belgeTalepleri     BelgeTalebi[]
-  yazismalar         Yazisma[]
-  koordinatorNotlari KoordinatorNotu[]
-  uyarilar           Uyari[]
-  kararlar           Karar[]
-  dersTalepleri      KatalogDisiDersTalebi[]
-  izinliDonemler     IzinliDonem[]
+  anadalBolum           Bolum                   @relation(fields: [anadalBolumId], references: [id], onDelete: Restrict)
+  kabulDonemi           Donem                   @relation("KabulDonemi", fields: [kabulDonemId], references: [id], onDelete: Restrict)
+  anadalMezuniyetDonemi Donem?                  @relation("AnadalMezuniyetDonemi", fields: [anadalMezuniyetDonemId], references: [id], onDelete: Restrict)
+  kullanici             Kullanici?              @relation(fields: [kullaniciId], references: [id], onDelete: Restrict)
+  planDersleri          PlanDersi[]
+  ganoKayitlari         AnadalGanoKaydi[]
+  belgeler              Belge[]
+  belgeTalepleri        BelgeTalebi[]
+  yazismalar            Yazisma[]
+  koordinatorNotlari    KoordinatorNotu[]
+  uyarilar              Uyari[]
+  kararlar              Karar[]
+  dersTalepleri         KatalogDisiDersTalebi[]
+  izinliDonemler        IzinliDonem[]
 
   @@index([anadalBolumId])
   @@index([kabulDonemId])

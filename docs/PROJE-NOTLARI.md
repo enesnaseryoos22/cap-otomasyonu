@@ -104,6 +104,8 @@ Her ayar değişikliği yeni bir sürüm satırı olarak eklenir (geçerlilik ba
   - Rol kontrolü: GANO, karar, not, ayar, onay ve izin kayıtlarını yalnız koordinatör yazar. Bölüm başkanı hiçbir kaydın sahibi olamaz.
   - S2: öğrencinin notu transkript belgesine bağlanmadan kaydedilemez.
   - Belgenin dosyası, mesajın metni ve uyarının içeriği değişmez.
+  - Geçilmiş veya muaf ders listeden çıkarılamaz (e-posta: "geçilmiş dersler ve notlar etkilenmemeli").
+  - Anadal mezuniyet dönemi `ogrenci.anadal_mezuniyet_donem_id` alanındadır (Ç6, Y5, Y6).
   - Kısmi tekil indeksler: aynı ders etkin planda bir kez; dönem başına tek GANO ve tek izin; tür başına tek geçerli karar.
   - Testler: `server/tests/veritabani.test.js` (her deneme geri alınan bir transaction içinde).
 - **Oturum (planlanan; ilk sürümü commit `db5da49`'da):** 2 saatlik JWT, httpOnly + SameSite=Strict çerezde. 5 hatalı denemede hesap 15 dk kilitlenir; IP başına 15 dk'da 20 giriş denemesi. CSRF: double-submit jeton (`csrf` çerezi + `X-CSRF-Token` başlığı).
