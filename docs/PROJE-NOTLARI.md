@@ -78,7 +78,8 @@ Bir özellik bitince kutusu işaretlenir. Demo kapsamındakiler **[30 Ekim]** il
 | ydp.gano_esik_donem | 2 | YDP Md. 7/6 |
 | ydp.ders_almama_donem | 2 | YDP Md. 7/4 |
 | ydp.ek_sure_yariyil | 2 | YDP Md. 7/9 |
-| not.harf_katsayilari | AA, BA, BB, CB, CC, DC, DD, FD, FF → katsayı (onaylanacak) | Sınav Yönetmeliği |
+| not.harf_katsayilari | AA 4, BA 3,5, BB 3, CB 2,5, CC 2, DC 1,5, DD 1, FD 0,5, FF 0, F 0, G 0, K 0 | Selçuk Üniversitesi not sistemi sayfası |
+| not.ortalamaya_girmeyen_harfler | G (Geçti), K (Kaldı) | Notsuz dersler (ör. staj); tasarım kararı |
 | not.tekrar_gecerli_deneme | son deneme (onaylanacak) | Sınav Yönetmeliği |
 | not.ortalama_agirlik | AKTS | Tasarım kararı |
 | dosya.izinli_turler / dosya.max_mb | PDF, JPG, PNG / 10 | Tasarım kararı |
@@ -173,7 +174,9 @@ Bölüm sayfasında bir de Makine → BM protokolü var, ama dosyasına erişile
 - **Md. 9/1-e ifadesi:** Yönerge "bir defaya mahsus 2,50'nin altına düşebilir" der; YÖK Yönetmeliği "65'e kadar" der (65 = 2,50; 2,72 = 70,13). Varsayılan: Yönetmelik yorumu, yani ilk düşüşte 2,50'nin altı kayıt silme uyarısıdır.
 - **Muafiyet formu** form setinde yok; sistemde belge türü olarak tanımlanır.
 - **ÇAP öğrenci no:** benzersiz anahtar anadal öğrenci numarasıdır; ÇAP numarası ek alandır.
-- **Harf notu katsayıları ve tekrar kuralı** Sınav Yönetmeliği'ne bağlıdır. Ayardan girilir, koordinatöre teyit ettirilir.
+- **Harf notu katsayıları** Selçuk Üniversitesi not sistemi sayfasından alındı (18 Ekim; sayfa bir meslek yüksekokulunun sitesinde, not sistemi üniversite geneli için geçerli varsayıldı). Sayfa G ve K için katsayı 0 verir; bunlar notsuz derslerdir ve ortalamaya katılmaz (varsayım). Ayarda yeni sürüm olarak eklendi.
+- **Tekrar kuralı** (ortalamaya hangi denemenin girdiği) Sınav Yönetmeliği'ne bağlıdır. Ayardan girilir, koordinatöre teyit ettirilir.
+- **Yaz okulu:** Selçuk'ta yaz okulu yoktur; başka üniversitenin yaz okulunda alınan ders sayılabilir. Bu yüzden `YAZ` dönem türü şemada tutulur.
 - **Özel notlar:** e-posta "öğrenci görmez" diyor. Bölüm başkanı için açık değil; varsayılan olarak notları yalnız koordinatör görür.
 - **YDP izinli öğrenci (YDP Md. 7/2):** Ana dalda izinli (mazeretli) sayılan öğrenci yan dalda da izinli sayılır. Taslakta ÇAP için Ç4 var, YDP için karşılığı yok. Uygulamada Ç4 mantığı YDP'ye de uygulanır: izinli dönemler Y4 (iki dönem ders almama) hesabına girmez.
 - **Seçmeli ders türleri:** Bologna sayfası seçmelileri ayırmaz. Örnek veride 4. yarıyıl seçmelileri ve 7. yarıyılın 2 AKTS'lik seçmelileri `SOSYAL_SECMELI`, diğerleri `TEKNIK_SECMELI` sayıldı (protokoldeki "Teknik Seçmeli" yuvalarını bunlar doldurur). Koordinatöre teyit ettirilecek. Bologna sayfasında ulusal kredi yok; alan boş bırakıldı.
