@@ -16,7 +16,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  // Tablo değişiklikleri (migrate) havuzsuz, doğrudan bağlantıyla yapılır (Neon önerisi).
+  // Yerelde DATABASE_URL ile aynıdır.
+  directUrl = env("DIRECT_URL")
 }
 
 // =====================================================================
