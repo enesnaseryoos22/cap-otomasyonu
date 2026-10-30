@@ -19,4 +19,20 @@ export const ONAY_DURUMU = {
   IPTAL: { etiket: 'İptal', renk: 'default' },
 };
 
-export const donemAdi =(d) => (d ? `${d.akademikYil} ${DONEM[d.tur]}` : '');
+export const BELGE_TURU = {
+  KABUL_VE_DERS_PROTOKOLU: 'Kabul ve ders protokolü (imzalı)',
+  DERS_KAYIT_FORMU: 'Ders kayıt formu',
+  CAP_YDP_TRANSKRIPTI: 'ÇAP/YDP transkripti',
+  ANADAL_TRANSKRIPTI: 'Anadal transkripti',
+  MUAFIYET_FORMU: 'Muafiyet formu',
+  YONETIM_KURULU_YAZISI: 'Yönetim kurulu yazısı',
+  RESMI_YAZI: 'Resmi yazı',
+  EK_BELGE: 'Ek belge',
+  MESAJ_EKI: 'Mesaj eki',
+};
+// Öğrencinin yükleyebileceği türler (sunucudaki liste ile aynı)
+export const OGRENCI_BELGE_TURLERI = ['KABUL_VE_DERS_PROTOKOLU', 'DERS_KAYIT_FORMU', 'MUAFIYET_FORMU', 'EK_BELGE'];
+
+export const boyutYaz = (bayt) => (bayt < 1024 * 1024 ? `${Math.ceil(bayt / 1024)} KB` : `${(bayt / 1024 / 1024).toFixed(1)} MB`);
+
+export const donemAdi = (d) => (d ? `${d.akademikYil} ${DONEM[d.tur]}` : '');

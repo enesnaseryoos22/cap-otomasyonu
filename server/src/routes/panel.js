@@ -9,13 +9,14 @@ router.use(girisGerekli);
 router.get('/panel', async (req, res) => {
   if (req.kullanici.rol === 'OGRENCI') return res.json(await ogrenciOzeti(req.kullanici.id));
 
-  const [toplam, cap, ydp, onayBekleyen] = await Promise.all([
+  const [toplam, cap, ydp, bekleyenDers, bekleyenBelge] = await Promise.all([
     prisma.ogrenci.count(),
     prisma.ogrenci.count({ where: { programTuru: 'CAP' } }),
     prisma.ogrenci.count({ where: { programTuru: 'YDP' } }),
     prisma.planDersi.count({ where: { onayDurumu: 'ONAY_BEKLIYOR' } }),
+    prisma.belge.count({ where: { onayDurumu: 'ONAY_BEKLIYOR' } }),
   ]);
-  res.json({ ogrenciSayisi: { toplam, cap, ydp }, onayBekleyen });
+  res.json({ ogrenciSayisi: { toplam, cap, ydp }, onayBekleyen: bekleyenDers + bekleyenBelge });
 });
 
 // Öğrenci yalnız kendi kaydını görür: kimlik oturumdan alınır, adresten değil.

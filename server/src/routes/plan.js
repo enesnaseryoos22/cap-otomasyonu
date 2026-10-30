@@ -35,6 +35,14 @@ async function kartGetir(ogrenciId) {
           ders: { select: { kod: true, ad: true, akts: true, yariyil: true, tur: true } },
         },
       },
+      // Belge arşivi: tüm sürümler (eski sürümler silinmez)
+      belgeler: {
+        orderBy: [{ tur: 'asc' }, { surumNo: 'desc' }],
+        select: {
+          id: true, tur: true, orijinalAd: true, boyut: true, surumNo: true,
+          onayDurumu: true, redGerekcesi: true, olusturma: true,
+        },
+      },
     },
   });
   if (!ogrenci) return null;

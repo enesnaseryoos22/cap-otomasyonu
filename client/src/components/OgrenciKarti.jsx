@@ -1,27 +1,47 @@
 import { useState } from 'react';
 import {
-  Alert, Box, Button, Chip, LinearProgress, Paper, Stack, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Tooltip, Typography,
+  Alert, Box, Button, Chip, LinearProgress, Link, Paper, Stack, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Typography,
 } from '@mui/material';
 import OzetKarti from './OzetKarti.jsx';
-import { PROGRAM, OGRENCI_DURUMU, DERS_DURUMU, ONAY_DURUMU, donemAdi } from '../etiketler.js';
-import { planKarariVer } from '../planKarari.js';
+import {
+  PROGRAM, OGRENCI_DURUMU, DERS_DURUMU, ONAY_DURUMU, BELGE_TURU, boyutYaz, donemAdi,
+} from '../etiketler.js';
+import { kararVer } from '../planKarari.js';
 
-// Öğrenci kartı: kimlik, AKTS özeti ve ders planı. Üç rol de aynı kartı görür;
+const OnayEtiketi = ({ kayit }) => (
+  <>
+    <Chip size="small" label={ONAY_DURUMU[kayit.onayDurumu].etiket} color={ONAY_DURUMU[kayit.onayDurumu].renk} />
+    {kayit.redGerekcesi && <Typography variant="caption" sx={{ display: 'block' }}>{kayit.redGerekcesi}</Typography>}
+  </>
+);
+
+// Öğrenci kartı: kimlik, AKTS özeti, ders planı ve belge arşivi. Üç rol de aynı kartı görür;
 // yalnız koordinatör (onaylayabilir) onay/ret düğmelerini görür.
-export default function OgrenciKarti({ kart, onaylayabilir = false, yenile, ustDugme }) {
+export default function OgrenciKarti({ kart, onaylayabilir = false, yenile, ustDugme, belgeDugmesi }) {
   const [hata, setHata] = useState('');
   const { akts } = kart;
   const yuzde = akts.gerekli ? Math.min(Math.round((akts.tamamlanan / akts.gerekli) * 100), 100) : 0;
 
-  async function karar(planId, tur) {
+  async function karar(kaynak, id, tur) {
     setHata('');
     try {
-      if (await planKarariVer(planId, tur)) yenile();
+      if (await kararVer(kaynak, id, tur)) yenile();
     } catch (e) {
       setHata(e.message);
     }
   }
+
+  const kararDugmeleri = (kaynak, kayit) => onaylayabilir && (
+    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+      {kayit.onayDurumu === 'ONAY_BEKLIYOR' && (
+        <>
+          <Button size="small" color="success" onClick={() => karar(kaynak, kayit.id, 'ONAYLA')}>Onayla</Button>
+          <Button size="small" color="error" onClick={() => karar(kaynak, kayit.id, 'REDDET')}>Reddet</Button>
+        </>
+      )}
+    </TableCell>
+  );
 
   return (
     <>
@@ -79,22 +99,45 @@ export default function OgrenciKarti({ kart, onaylayabilir = false, yenile, ustD
                   <TableCell>{p.ders.yariyil}</TableCell>
                   <TableCell>{p.ders.akts}</TableCell>
                   <TableCell>{DERS_DURUMU[p.durum]}</TableCell>
+                  <TableCell><OnayEtiketi kayit={p} /></TableCell>
+                  {kararDugmeleri('/plan', p)}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </TableContainer>
+
+      <TableContainer component={Paper} sx={{ mt: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>Belgeler</Typography>
+          {belgeDugmesi}
+        </Box>
+        {kart.belgeler.length === 0 ? (
+          <Alert severity="info" sx={{ m: 2 }}>Henüz belge yüklenmedi.</Alert>
+        ) : (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Tür</TableCell>
+                <TableCell>Dosya</TableCell>
+                <TableCell>Sürüm</TableCell>
+                <TableCell>Yükleme</TableCell>
+                <TableCell>Onay</TableCell>
+                {onaylayabilir && <TableCell />}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {kart.belgeler.map((b) => (
+                <TableRow key={b.id} sx={b.onayDurumu === 'REDDEDILDI' ? { opacity: 0.6 } : undefined}>
+                  <TableCell>{BELGE_TURU[b.tur]}</TableCell>
                   <TableCell>
-                    <Tooltip title={p.redGerekcesi ? `Gerekçe: ${p.redGerekcesi}` : ''}>
-                      <Chip size="small" label={ONAY_DURUMU[p.onayDurumu].etiket} color={ONAY_DURUMU[p.onayDurumu].renk} />
-                    </Tooltip>
-                    {p.redGerekcesi && <Typography variant="caption" sx={{ display: 'block' }}>{p.redGerekcesi}</Typography>}
+                    <Link href={`/api/belgeler/${b.id}/dosya`}>{b.orijinalAd}</Link> ({boyutYaz(b.boyut)})
                   </TableCell>
-                  {onaylayabilir && (
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                      {p.onayDurumu === 'ONAY_BEKLIYOR' && (
-                        <>
-                          <Button size="small" color="success" onClick={() => karar(p.id, 'ONAYLA')}>Onayla</Button>
-                          <Button size="small" color="error" onClick={() => karar(p.id, 'REDDET')}>Reddet</Button>
-                        </>
-                      )}
-                    </TableCell>
-                  )}
+                  <TableCell>{b.surumNo}</TableCell>
+                  <TableCell>{new Date(b.olusturma).toLocaleString('tr-TR')}</TableCell>
+                  <TableCell><OnayEtiketi kayit={b} /></TableCell>
+                  {kararDugmeleri('/belgeler', b)}
                 </TableRow>
               ))}
             </TableBody>

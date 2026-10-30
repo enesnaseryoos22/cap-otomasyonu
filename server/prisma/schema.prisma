@@ -569,9 +569,22 @@ model Belge {
   mesajlar         Mesaj[]
   izinliDonemler   IzinliDonem[]
   kararlar         Karar[]
+  icerik           BelgeIcerigi?
 
   @@index([ogrenciId, tur])
   @@map("belge")
+}
+
+// Dosyanın kendisi. Canlı ortamda (Render) disk kalıcı olmadığı için dosya veritabanında
+// saklanır. Satır eklendikten sonra değiştirilemez ve silinemez (tetikleyici).
+model BelgeIcerigi {
+  belgeId   String   @id @map("belge_id") @db.Uuid
+  icerik    Bytes
+  olusturma DateTime @default(now()) @db.Timestamptz(6)
+
+  belge Belge @relation(fields: [belgeId], references: [id], onDelete: Restrict)
+
+  @@map("belge_icerigi")
 }
 
 // Koordinatörün öğrenciden ek belge veya bilgi istemesi
