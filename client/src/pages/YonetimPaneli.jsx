@@ -9,10 +9,11 @@ import { api } from '../api.js';
 // Koordinatör ve bölüm başkanının ana paneli. Bölüm başkanı aynı bilgileri görür ama değiştiremez.
 export default function YonetimPaneli({ baslik, saltOkunur = false }) {
   const [ozet, setOzet] = useState(null);
+  const [surum, setSurum] = useState(0); // bir kayıt değişince özet ve işlem kaydı yenilenir
 
   useEffect(() => {
     api('/panel').then(setOzet).catch(() => {});
-  }, []);
+  }, [surum]);
 
   return (
     <AnaDuzen baslik={baslik}>
@@ -30,8 +31,8 @@ export default function YonetimPaneli({ baslik, saltOkunur = false }) {
         </Stack>
       )}
       <Stack spacing={3}>
-        <OgrenciTablosu />
-        <IslemKaydiTablosu />
+        <OgrenciTablosu yonetebilir={!saltOkunur} degisti={() => setSurum((s) => s + 1)} />
+        <IslemKaydiTablosu key={surum} />
       </Stack>
     </AnaDuzen>
   );

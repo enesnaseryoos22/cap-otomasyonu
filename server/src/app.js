@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import kimlikRotalari from './routes/kimlik.js';
 import panelRotalari from './routes/panel.js';
+import ogrenciRotalari from './routes/ogrenci.js';
 import { csrfKontrol } from './middleware/kimlik.js';
 import { ayarlar } from './ayarlar.js';
 
@@ -25,8 +26,12 @@ app.use(cookieParser());
 // (girişte henüz jeton yoktur; SameSite=Strict çerez burada korur).
 app.use('/api', (req, res, next) => (req.path === '/kimlik/giris' ? next() : csrfKontrol(req, res, next)));
 
+// GEÇİCİ: Render'daki vekil sunucu zincirini görmek için; ayar yapıldıktan sonra kaldırılacak.
+app.get('/api/tani', (req, res) => res.json({ xff: req.get('x-forwarded-for'), ip: req.ip, trueClientIp: req.get('true-client-ip') ?? null }));
+
 app.use('/api/kimlik', kimlikRotalari);
 app.use('/api', panelRotalari);
+app.use('/api', ogrenciRotalari);
 
 app.use('/api', (req, res) => res.status(404).json({ hata: 'Bulunamadı.' }));
 

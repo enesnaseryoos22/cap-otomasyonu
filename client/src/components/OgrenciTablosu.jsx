@@ -1,21 +1,40 @@
 import { useEffect, useState } from 'react';
-import { Alert, Chip, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import {
+  Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Paper,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography,
+} from '@mui/material';
 import { api } from '../api.js';
 import { PROGRAM, OGRENCI_DURUMU, donemAdi } from '../etiketler.js';
+import OgrenciEkleDialog from './OgrenciEkleDialog.jsx';
 
-export default function OgrenciTablosu() {
+// yonetebilir: yalnız koordinatör öğrenci ekler ve hesap açar (bölüm başkanı yalnız görür).
+export default function OgrenciTablosu({ yonetebilir = false, degisti = () => {} }) {
   const [ogrenciler, setOgrenciler] = useState([]);
   const [hata, setHata] = useState('');
+  const [ekleAcik, setEkleAcik] = useState(false);
+  const [hesap, setHesap] = useState(null); // yeni açılan hesabın geçici şifresi
 
-  useEffect(() => {
-    api('/ogrenciler').then((v) => setOgrenciler(v.ogrenciler)).catch((e) => setHata(e.message));
-  }, []);
+  const yukle = () => api('/ogrenciler').then((v) => setOgrenciler(v.ogrenciler)).catch((e) => setHata(e.message));
+  useEffect(() => { yukle(); }, []);
 
-  if (hata) return <Alert severity="error">{hata}</Alert>;
+  async function hesapAc(o) {
+    if (!window.confirm(`${o.adSoyad} için hesap açılsın mı?`)) return;
+    try {
+      setHesap(await api(`/ogrenciler/${o.id}/hesap`, { method: 'POST' }));
+      yukle();
+      degisti();
+    } catch (e) {
+      setHata(e.message);
+    }
+  }
 
   return (
     <TableContainer component={Paper}>
-      <Typography variant="h6" sx={{ p: 2 }}>Öğrenciler</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>Öğrenciler</Typography>
+        {yonetebilir && <Button variant="contained" onClick={() => setEkleAcik(true)}>Öğrenci Ekle</Button>}
+      </Box>
+      {hata && <Alert severity="error" sx={{ mx: 2, mb: 2 }} onClose={() => setHata('')}>{hata}</Alert>}
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -38,14 +57,34 @@ export default function OgrenciTablosu() {
               <TableCell>{donemAdi(o.kabulDonemi)}</TableCell>
               <TableCell>{OGRENCI_DURUMU[o.durum]}</TableCell>
               <TableCell>
-                {o.kullaniciId
-                  ? <Chip label="Açık" color="success" size="small" />
-                  : <Chip label="Açılmadı" size="small" />}
+                {o.kullaniciId && <Chip label="Açık" color="success" size="small" />}
+                {!o.kullaniciId && yonetebilir && <Button size="small" onClick={() => hesapAc(o)}>Hesap Aç</Button>}
+                {!o.kullaniciId && !yonetebilir && <Chip label="Açılmadı" size="small" />}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      <OgrenciEkleDialog
+        acik={ekleAcik}
+        kapat={() => setEkleAcik(false)}
+        eklendi={() => { setEkleAcik(false); yukle(); degisti(); }}
+      />
+
+      <Dialog open={!!hesap} onClose={() => setHesap(null)}>
+        <DialogTitle>Hesap açıldı</DialogTitle>
+        <DialogContent>
+          <Typography gutterBottom>E-posta: <b>{hesap?.eposta}</b></Typography>
+          <Typography gutterBottom>Geçici şifre: <b style={{ fontFamily: 'monospace', fontSize: 18 }}>{hesap?.geciciSifre}</b></Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Bu şifre yalnız şimdi gösterilir. Öğrenciye iletin.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHesap(null)}>Tamam</Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 }
