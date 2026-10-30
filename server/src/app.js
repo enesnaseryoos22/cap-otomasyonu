@@ -15,9 +15,11 @@ export const app = express();
 const arayuzKlasoru = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../client/dist');
 
 app.disable('x-powered-by');
-// Gerçek istemci IP'si (giriş sınırı ve işlem kaydı için): canlıda barındırma servisinin
-// önündeki tek vekil sunucuya, yerelde Vite geliştirme sunucusuna güvenilir.
-app.set('trust proxy', ayarlar.uretimde ? 1 : 'loopback');
+// Gerçek istemci IP'si (giriş sınırı ve işlem kaydı için). Render'da istek üç vekilden geçer
+// (istemci → Cloudflare → Render iç ağı), bu yüzden sağdan 3 adım güvenilir; istemcinin
+// sahte X-Forwarded-For başlığı bu üç adımın soluna düşer ve kullanılmaz.
+// Yerelde yalnız Vite geliştirme sunucusuna güvenilir.
+app.set('trust proxy', ayarlar.uretimde ? 3 : 'loopback');
 app.use(helmet());
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
@@ -25,9 +27,6 @@ app.use(cookieParser());
 // Giriş isteği hariç tüm değiştirici isteklerde CSRF jetonu aranır
 // (girişte henüz jeton yoktur; SameSite=Strict çerez burada korur).
 app.use('/api', (req, res, next) => (req.path === '/kimlik/giris' ? next() : csrfKontrol(req, res, next)));
-
-// GEÇİCİ: Render'daki vekil sunucu zincirini görmek için; ayar yapıldıktan sonra kaldırılacak.
-app.get('/api/tani', (req, res) => res.json({ xff: req.get('x-forwarded-for'), ip: req.ip, trueClientIp: req.get('true-client-ip') ?? null }));
 
 app.use('/api/kimlik', kimlikRotalari);
 app.use('/api', panelRotalari);
