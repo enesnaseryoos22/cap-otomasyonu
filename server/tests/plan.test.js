@@ -56,6 +56,16 @@ describe('Katalog ve ders seçimi', () => {
     expect(yanit.status).toBe(400);
   });
 
+  it('kartta her ders denemesi dönemi ve notuyla görünür (tekrar alınan ders iki deneme)', async () => {
+    const mehmet = await prisma.ogrenci.findUnique({ where: { ogrenciNo: '214301002' } });
+    const { kart } = (await koordinator.ajan.get(`/api/ogrenciler/${mehmet.id}/kart`)).body;
+    const tekrar = kart.planDersleri.find((p) => p.ders.kod === '3301352');
+    expect(tekrar.denemeler.map((d) => `${d.alinanDonem.akademikYil} ${d.harfNotu} ${d.sonuc}`))
+      .toEqual(['2025-2026 FF KALDI', '2026-2027 null ALINDI']);
+    const gecen = kart.planDersleri.find((p) => p.ders.kod === '3301156');
+    expect(gecen.denemeler[0].gecilenDonem).toEqual({ akademikYil: '2025-2026', tur: 'GUZ' });
+  });
+
   it('öğrenci başkasının kartını göremez', async () => {
     const yanit = await ogrenci.ajan.get(`/api/ogrenciler/${ogrenciId}/kart`);
     expect(yanit.status).toBe(403);

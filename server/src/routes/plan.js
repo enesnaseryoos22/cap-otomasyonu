@@ -33,6 +33,16 @@ async function kartGetir(ogrenciId) {
         select: {
           id: true, durum: true, onayDurumu: true, kaynak: true, redGerekcesi: true, onayTarihi: true, olusturma: true,
           ders: { select: { kod: true, ad: true, akts: true, yariyil: true, tur: true } },
+          // Her alış ayrı deneme: alındığı dönem, notu, sonucu ve geçtiği dönem
+          denemeler: {
+            where: { onayDurumu: { in: ['ONAYLANDI', 'ONAY_BEKLIYOR'] } },
+            orderBy: { olusturma: 'asc' },
+            select: {
+              id: true, harfNotu: true, sonuc: true, onayDurumu: true,
+              alinanDonem: { select: { akademikYil: true, tur: true } },
+              gecilenDonem: { select: { akademikYil: true, tur: true } },
+            },
+          },
         },
       },
       // Belge arşivi: tüm sürümler (eski sürümler silinmez)

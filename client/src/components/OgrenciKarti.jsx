@@ -86,6 +86,8 @@ export default function OgrenciKarti({ kart, onaylayabilir = false, yenile, ustD
                 <TableCell>Ders</TableCell>
                 <TableCell>Yarıyıl</TableCell>
                 <TableCell>AKTS</TableCell>
+                <TableCell>Alındığı dönem · not</TableCell>
+                <TableCell>Geçtiği dönem</TableCell>
                 <TableCell>Durum</TableCell>
                 <TableCell>Onay</TableCell>
                 {onaylayabilir && <TableCell />}
@@ -98,6 +100,17 @@ export default function OgrenciKarti({ kart, onaylayabilir = false, yenile, ustD
                   <TableCell>{p.ders.ad}</TableCell>
                   <TableCell>{p.ders.yariyil}</TableCell>
                   <TableCell>{p.ders.akts}</TableCell>
+                  <TableCell>
+                    {/* Her deneme ayrı satır (ders tekrar alındıysa birden fazla) */}
+                    {p.denemeler.length === 0 && '—'}
+                    {p.denemeler.map((d) => (
+                      <Typography key={d.id} variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                        {donemAdi(d.alinanDonem)} · {d.harfNotu ?? '—'} · {DERS_DURUMU[d.sonuc]}
+                        {d.onayDurumu === 'ONAY_BEKLIYOR' && ' (onay bekliyor)'}
+                      </Typography>
+                    ))}
+                  </TableCell>
+                  <TableCell>{donemAdi(p.denemeler.find((d) => d.gecilenDonem)?.gecilenDonem) || '—'}</TableCell>
                   <TableCell>{DERS_DURUMU[p.durum]}</TableCell>
                   <TableCell><OnayEtiketi kayit={p} /></TableCell>
                   {kararDugmeleri('/plan', p)}
