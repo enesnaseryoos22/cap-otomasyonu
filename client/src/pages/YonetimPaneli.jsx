@@ -4,6 +4,7 @@ import AnaDuzen from '../components/AnaDuzen.jsx';
 import OzetKarti from '../components/OzetKarti.jsx';
 import OgrenciTablosu from '../components/OgrenciTablosu.jsx';
 import IslemKaydiTablosu from '../components/IslemKaydiTablosu.jsx';
+import OnayBekleyenler from '../components/OnayBekleyenler.jsx';
 import { api } from '../api.js';
 
 // Koordinatör ve bölüm başkanının ana paneli. Bölüm başkanı aynı bilgileri görür ama değiştiremez.
@@ -31,6 +32,7 @@ export default function YonetimPaneli({ baslik, saltOkunur = false }) {
         </Stack>
       )}
       <Stack spacing={3}>
+        <OnayBekleyenler key={`onay-${surum}`} onaylayabilir={!saltOkunur} degisti={() => setSurum((s) => s + 1)} />
         <OgrenciTablosu yonetebilir={!saltOkunur} degisti={() => setSurum((s) => s + 1)} />
         <IslemKaydiTablosu key={surum} />
       </Stack>

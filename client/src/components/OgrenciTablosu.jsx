@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router';
 import {
-  Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Paper,
+  Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Link, Paper,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography,
 } from '@mui/material';
 import { api } from '../api.js';
@@ -51,7 +52,9 @@ export default function OgrenciTablosu({ yonetebilir = false, degisti = () => {}
           {ogrenciler.map((o) => (
             <TableRow key={o.id}>
               <TableCell>{o.ogrenciNo}</TableCell>
-              <TableCell>{o.adSoyad}</TableCell>
+              <TableCell>
+                <Link component={RouterLink} to={`/ogrenci-karti/${o.id}`}>{o.adSoyad}</Link>
+              </TableCell>
               <TableCell>{PROGRAM[o.programTuru]}</TableCell>
               <TableCell>{o.anadalBolum.kod}</TableCell>
               <TableCell>{donemAdi(o.kabulDonemi)}</TableCell>

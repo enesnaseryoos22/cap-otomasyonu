@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import kimlikRotalari from './routes/kimlik.js';
 import panelRotalari from './routes/panel.js';
 import ogrenciRotalari from './routes/ogrenci.js';
+import planRotalari from './routes/plan.js';
 import { csrfKontrol } from './middleware/kimlik.js';
 import { ayarlar } from './ayarlar.js';
 
@@ -31,6 +32,7 @@ app.use('/api', (req, res, next) => (req.path === '/kimlik/giris' ? next() : csr
 app.use('/api/kimlik', kimlikRotalari);
 app.use('/api', panelRotalari);
 app.use('/api', ogrenciRotalari);
+app.use('/api', planRotalari);
 
 app.use('/api', (req, res) => res.status(404).json({ hata: 'Bulunamadı.' }));
 

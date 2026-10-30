@@ -6,6 +6,7 @@ import { OturumSaglayici, RolKorumasi } from './auth/Oturum.jsx';
 import GirisSayfasi from './pages/GirisSayfasi.jsx';
 import YonetimPaneli from './pages/YonetimPaneli.jsx';
 import OgrenciPaneli from './pages/OgrenciPaneli.jsx';
+import KartSayfasi from './pages/KartSayfasi.jsx';
 
 const tema = createTheme({ palette: { primary: { main: '#1a3d6d' } } });
 
@@ -25,6 +26,9 @@ createRoot(document.getElementById('root')).render(
             } />
             <Route path="/bolum-baskani" element={
               <RolKorumasi rol="BOLUM_BASKANI"><YonetimPaneli baslik="Bölüm Başkanı Paneli" saltOkunur /></RolKorumasi>
+            } />
+            <Route path="/ogrenci-karti/:id" element={
+              <RolKorumasi rol={['KOORDINATOR', 'BOLUM_BASKANI']}><KartSayfasi /></RolKorumasi>
             } />
             <Route path="*" element={<Navigate to="/giris" replace />} />
           </Routes>

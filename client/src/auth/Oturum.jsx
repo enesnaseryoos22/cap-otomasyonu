@@ -43,9 +43,10 @@ export const ROL_SAYFASI = {
   BOLUM_BASKANI: '/bolum-baskani',
 };
 
-// Sayfayı yalnız izin verilen role gösterir; diğerlerini kendi sayfasına yönlendirir.
+// Sayfayı yalnız izin verilen role (veya rollere) gösterir; diğerlerini kendi sayfasına yönlendirir.
 // (Asıl yetki kontrolü sunucudadır; bu yalnız kullanıcıyı doğru sayfaya götürür.)
 export function RolKorumasi({ rol, children }) {
+  const roller = [].concat(rol);
   const { kullanici, yukleniyor } = useOturum();
   if (yukleniyor) {
     return (
@@ -55,6 +56,6 @@ export function RolKorumasi({ rol, children }) {
     );
   }
   if (!kullanici) return <Navigate to="/giris" replace />;
-  if (kullanici.rol !== rol) return <Navigate to={ROL_SAYFASI[kullanici.rol]} replace />;
+  if (!roller.includes(kullanici.rol)) return <Navigate to={ROL_SAYFASI[kullanici.rol]} replace />;
   return children;
 }
